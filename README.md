@@ -182,6 +182,14 @@ Before pushing, run the repository secret check locally:
 ./scripts/check-for-secrets.sh
 ```
 
+Enable the versioned pre-push protection once in each clone:
+
+```bash
+git config core.hooksPath .githooks
+```
+
+The hook runs the same secret check automatically and cancels the push when it detects a sensitive path, a high-confidence credential, a literal configuration secret, or a developer-specific absolute home path.
+
 Keep database passwords, signing keys, master keys, certificate material, access tokens, and environment-specific configuration outside Git. Store CI-only values in GitHub Actions secrets. Enable GitHub secret scanning and push protection in the repository settings when available.
 
 ## Implementation roadmap
