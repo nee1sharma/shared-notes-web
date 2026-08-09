@@ -1,0 +1,19 @@
+spring:
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration
+      - org.springframework.boot.flyway.autoconfigure.FlywayAutoConfiguration
+
+shared-notebook:
+  prototype-mode: true
+  node:
+    id: prototype-admin-laptop
+  security:
+    master-key-ref: prototype-not-used
+    signing-key-ref: prototype-not-used
+  home-lan:
+    profile-ref: prototype-not-used
+
+logging:
+  level:
+    org.springframework.security: WARN

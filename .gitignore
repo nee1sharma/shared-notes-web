@@ -1,0 +1,39 @@
+# Operating system and IDE files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.iml
+
+# Build output and generated files
+target/
+frontend/node_modules/
+frontend/dist/
+frontend/*.tsbuildinfo
+*.log
+
+# Local environment and secret files
+.env
+.env.*
+!.env.example
+secrets/
+credentials/
+**/secrets/
+**/credentials/
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
+*.der
+*.crt
+*.cer
+
+# Local Spring configuration must never override committed safe defaults
+src/main/resources/application-local.yaml
+src/main/resources/application-local.yml
+src/main/resources/application-secrets.yaml
+src/main/resources/application-secrets.yml
+src/main/resources/application-*.local.yaml
+src/main/resources/application-*.local.yml

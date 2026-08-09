@@ -1,0 +1,66 @@
+name: Build JAR
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  secret-scan:
+    name: Check for committed secrets
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+
+      - name: Scan tracked files
+        run: ./scripts/check-for-secrets.sh
+
+  build:
+    name: Package application
+    needs: secret-scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+
+      - name: Set up Java 25
+        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: maven
+
+      - name: Build frontend and Spring Boot JAR
+        run: ./mvnw --batch-mode --no-transfer-progress clean package -DskipTests
+
+      - name: Locate JAR and create SHA-256 checksum
+        id: artifact
+        run: |
+          mapfile -t jar_files < <(find target -maxdepth 1 -type f -name 'shared-notebook-*.jar' | sort)
+          if [[ "${#jar_files[@]}" -ne 1 ]]; then
+            echo "Expected exactly one packaged SharedNoteBook JAR, found ${#jar_files[@]}."
+            exit 1
+          fi
+          jar_path="${jar_files[0]}"
+          checksum_path="${jar_path}.sha256"
+          sha256sum "$jar_path" > "$checksum_path"
+          echo "jar_path=$jar_path" >> "$GITHUB_OUTPUT"
+          echo "checksum_path=$checksum_path" >> "$GITHUB_OUTPUT"
+
+      - name: Upload JAR artifact
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: shared-notebook-${{ github.sha }}
+          path: |
+            ${{ steps.artifact.outputs.jar_path }}
+            ${{ steps.artifact.outputs.checksum_path }}
+          if-no-files-found: error
+          retention-days: 14

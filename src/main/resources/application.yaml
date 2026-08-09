@@ -1,0 +1,130 @@
+spring:
+  application:
+    name: shared-notebook
+  datasource:
+    url: ${SNB_DB_URL:jdbc:postgresql://localhost:5432/shared_notebook}
+    username: ${SNB_DB_USER:shared_notebook}
+    password: ${SNB_DB_PASSWORD}
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+      connection-timeout: 10s
+  flyway:
+    enabled: true
+  jdbc:
+    template:
+      query-timeout: 10s
+
+server:
+  address: 127.0.0.1
+  port: 8080
+  shutdown: graceful
+  servlet:
+    session:
+      cookie:
+        http-only: true
+        same-site: strict
+      timeout: 30m
+
+shared-notebook:
+  prototype-mode: false
+  node:
+    role: ROOT_ADMIN_LAPTOP
+    id: ${SNB_NODE_ID}
+    auto-start-discovery: true
+  web:
+    enabled: true
+    root-admin-loopback-only: true
+    lan-access-enabled: false
+    lan-bind-address: 0.0.0.0
+    lan-port: 8443
+    lan-https-required: true
+    tls-certificate-ref: ${SNB_TLS_CERT_REF:}
+    tls-private-key-ref: ${SNB_TLS_KEY_REF:}
+  security:
+    master-key-ref: ${SNB_MASTER_KEY_REF}
+    signing-key-ref: ${SNB_SIGNING_KEY_REF}
+    content-cipher: AES_256_GCM
+    key-provider: OS_KEYSTORE
+    admin-reauthentication: 5m
+    authentication-max-failures: 5
+    authentication-lockout: 15m
+    passkeys:
+      enabled: true
+      relying-party-id: ${SNB_PASSKEY_RP_ID:localhost}
+      relying-party-name: SharedNoteBook
+      allowed-origins:
+        - ${SNB_PASSKEY_ORIGIN:http://localhost:8080}
+      user-verification: REQUIRED
+      attestation: NONE
+      challenge-timeout: 2m
+      max-credentials-per-admin: 5
+  home-lan:
+    profile-ref: ${SNB_HOME_LAN_PROFILE_REF}
+  discovery:
+    enabled: true
+    service-type: _sharednotebook._tcp.local.
+    bind-address: 0.0.0.0
+    port: 7843
+    heartbeat-interval: 15s
+    offline-after: 45s
+    stale-after: 24h
+  enrollment:
+    android-enabled: true
+    android-mode: OPEN_ON_HOME_LAN
+    web-enabled: true
+    web-mode: ADMIN_APPROVAL_REQUIRED
+    request-retention: 7d
+  synchronization:
+    web-trigger-mode: AFTER_EACH_SAVE
+    reconciliation-interval: 30s
+    batch-size: 200
+    command-timeout: 60s
+  history:
+    note-revisions-default: 5
+    note-revisions-min: 1
+    note-revisions-max: 100
+    activity-retention-default: 100d
+    activity-retention-min: 1d
+    activity-retention-max: 3650d
+  trash:
+    retention-default: 30d
+    retention-min: 1d
+    retention-max: 365d
+    purge-cron: "0 0 3 * * *"
+  sessions:
+    idle-timeout-default: 30m
+    idle-timeout-min: 5m
+    idle-timeout-max: 12h
+    absolute-timeout: 24h
+    max-concurrent-per-web-device: 2
+  private-delivery:
+    acknowledgement-timeout: 5m
+    job-retention: 30d
+    require-owned-device: true
+  roles:
+    delegated-admin-can-grant-admin: false
+  audit:
+    page-size-default: 100
+    page-size-max: 500
+  notes-list:
+    page-size-default: 20
+    page-size-max: 20
+    scan-batch-size: 200
+    cursor-ttl: 5m
+    search-fields:
+      - TITLE
+      - CREATED_BY
+      - LAST_EDITED_BY
+      - MODIFIED_DATE
+      - CONFLICT_STATE
+    plaintext-search-index-enabled: false
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: never

@@ -1,0 +1,81 @@
+name: Publish GitHub Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing semantic version tag to release, for example v0.1.0
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Build and publish release JAR
+    runs-on: ubuntu-latest
+    env:
+      RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
+    steps:
+      - name: Validate release tag
+        run: |
+          if [[ ! "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.-]+)?$ ]]; then
+            echo "Release tags must use semantic versioning, for example v0.1.0."
+            exit 1
+          fi
+
+      - name: Check out tagged source
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: ${{ env.RELEASE_TAG }}
+
+      - name: Scan tracked files
+        run: ./scripts/check-for-secrets.sh
+
+      - name: Set up Java 25
+        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: maven
+
+      - name: Build frontend and Spring Boot JAR
+        run: ./mvnw --batch-mode --no-transfer-progress clean package -DskipTests
+
+      - name: Prepare release assets
+        run: |
+          mapfile -t jar_files < <(find target -maxdepth 1 -type f -name 'shared-notebook-*.jar' | sort)
+          if [[ "${#jar_files[@]}" -ne 1 ]]; then
+            echo "Expected exactly one packaged SharedNoteBook JAR, found ${#jar_files[@]}."
+            exit 1
+          fi
+          cp "${jar_files[0]}" "target/shared-notebook-${RELEASE_TAG}.jar"
+          sha256sum "target/shared-notebook-${RELEASE_TAG}.jar" > "target/shared-notebook-${RELEASE_TAG}.jar.sha256"
+
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release upload "$RELEASE_TAG" \
+              "target/shared-notebook-${RELEASE_TAG}.jar" \
+              "target/shared-notebook-${RELEASE_TAG}.jar.sha256" \
+              --clobber \
+              --repo "$GITHUB_REPOSITORY"
+          else
+            gh release create "$RELEASE_TAG" \
+              "target/shared-notebook-${RELEASE_TAG}.jar" \
+              "target/shared-notebook-${RELEASE_TAG}.jar.sha256" \
+              --verify-tag \
+              --generate-notes \
+              --title "SharedNoteBook ${RELEASE_TAG}" \
+              --repo "$GITHUB_REPOSITORY"
+          fi
