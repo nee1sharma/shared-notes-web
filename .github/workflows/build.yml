@@ -44,9 +44,9 @@ jobs:
       - name: Locate JAR and create SHA-256 checksum
         id: artifact
         run: |
-          mapfile -t jar_files < <(find target -maxdepth 1 -type f -name 'shared-notebook-*.jar' | sort)
+          mapfile -t jar_files < <(find target -maxdepth 1 -type f -name 'netbook-*.jar' | sort)
           if [[ "${#jar_files[@]}" -ne 1 ]]; then
-            echo "Expected exactly one packaged SharedNoteBook JAR, found ${#jar_files[@]}."
+            echo "Expected exactly one packaged NetBook JAR, found ${#jar_files[@]}."
             exit 1
           fi
           jar_path="${jar_files[0]}"
@@ -58,7 +58,7 @@ jobs:
       - name: Upload JAR artifact
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: shared-notebook-${{ github.sha }}
+          name: netbook-${{ github.sha }}
           path: |
             ${{ steps.artifact.outputs.jar_path }}
             ${{ steps.artifact.outputs.checksum_path }}

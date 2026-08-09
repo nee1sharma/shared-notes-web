@@ -1,14 +1,10 @@
 spring:
   application:
-    name: shared-notebook
-  autoconfigure:
-    exclude:
-      - org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration
-      - org.springframework.boot.flyway.autoconfigure.FlywayAutoConfiguration
+    name: netbook
   datasource:
-    url: ${SNB_DB_URL:jdbc:postgresql://localhost:5432/shared_notebook}
-    username: ${SNB_DB_USER:shared_notebook}
-    password: ${SNB_DB_PASSWORD}
+    url: ${NETBOOK_DB_URL:jdbc:postgresql://localhost:5432/netbook}
+    username: ${NETBOOK_DB_USER:netbook}
+    password: ${NETBOOK_DB_PASSWORD}
     hikari:
       maximum-pool-size: 10
       minimum-idle: 2
@@ -20,7 +16,10 @@ spring:
       query-timeout: 10s
 
 server:
-  address: 127.0.0.1
+  # The filter below still limits the browser/admin interface to localhost.
+  # Binding the socket to every interface lets registered Android devices use
+  # the separately authenticated mobile API on the home LAN.
+  address: 0.0.0.0
   port: 8080
   shutdown: graceful
   servlet:
@@ -30,15 +29,15 @@ server:
         same-site: strict
       timeout: 30m
 
-shared-notebook:
+netbook:
   node:
     role: ROOT_ADMIN_HOST
-    id: ${SNB_NODE_ID:}
-    name: ${SNB_DEVICE_NAME:}
-    member-name: ${SNB_MEMBER_NAME:}
-    app-name: SharedNoteBook Web
-    type: ${SNB_DEVICE_TYPE:LAPTOP}
-    platform: ${SNB_DEVICE_PLATFORM:WEB}
+    id: ${NETBOOK_NODE_ID:}
+    name: ${NETBOOK_DEVICE_NAME:}
+    member-name: ${NETBOOK_MEMBER_NAME:}
+    app-name: NetBook Web
+    type: ${NETBOOK_DEVICE_TYPE:LAPTOP}
+    platform: ${NETBOOK_DEVICE_PLATFORM:WEB}
     auto-start-discovery: true
   web:
     enabled: true
@@ -47,11 +46,14 @@ shared-notebook:
     lan-bind-address: 0.0.0.0
     lan-port: 8443
     lan-https-required: true
-    tls-certificate-ref: ${SNB_TLS_CERT_REF:}
-    tls-private-key-ref: ${SNB_TLS_KEY_REF:}
+    tls-certificate-ref: ${NETBOOK_TLS_CERT_REF:}
+    tls-private-key-ref: ${NETBOOK_TLS_KEY_REF:}
   security:
-    master-key-ref: ${SNB_MASTER_KEY_REF}
-    signing-key-ref: ${SNB_SIGNING_KEY_REF}
+    # A base64-encoded 32-byte AES key. It is required at startup and is used
+    # for display names and shared-note payloads stored in PostgreSQL.
+    master-key: ${NETBOOK_MASTER_KEY:}
+    master-key-ref: ${NETBOOK_MASTER_KEY_REF}
+    signing-key-ref: ${NETBOOK_SIGNING_KEY_REF}
     content-cipher: AES_256_GCM
     key-provider: OS_KEYSTORE
     admin-reauthentication: 5m
@@ -59,23 +61,25 @@ shared-notebook:
     authentication-lockout: 15m
     passkeys:
       enabled: true
-      relying-party-id: ${SNB_PASSKEY_RP_ID:localhost}
-      relying-party-name: SharedNoteBook
+      relying-party-id: ${NETBOOK_PASSKEY_RP_ID:localhost}
+      relying-party-name: NetBook
       allowed-origins:
-        - ${SNB_PASSKEY_ORIGIN:http://localhost:8080}
+        - ${NETBOOK_PASSKEY_ORIGIN:http://localhost:8080}
       user-verification: REQUIRED
       attestation: NONE
       challenge-timeout: 2m
       max-credentials-per-admin: 5
   home-lan:
-    profile-ref: ${SNB_HOME_LAN_PROFILE_REF}
+    profile-ref: ${NETBOOK_HOME_LAN_PROFILE_REF}
   discovery:
     enabled: true
-    service-type: _sharednotebook._tcp.local.
+    service-type: _netbook._tcp.local.
     bind-address: 0.0.0.0
-    port: 7843
+    # The mDNS service advertises the authenticated mobile HTTP endpoint.
+    port: ${server.port}
     heartbeat-interval: 15s
-    offline-after: 45s
+    # WorkManager's minimum periodic interval is 15 minutes.
+    offline-after: 20m
     stale-after: 24h
   enrollment:
     android-enabled: true

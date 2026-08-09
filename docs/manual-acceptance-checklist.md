@@ -8,11 +8,12 @@ This checklist validates the real runtime configuration. It must not use invente
 2. Build with `./mvnw clean package -DskipTests`.
 3. Start the packaged application without an alternate sample-data profile.
 4. Open `http://localhost:8080` on the host laptop.
-5. Confirm the displayed member and laptop names match `SNB_MEMBER_NAME` and `SNB_DEVICE_NAME`.
+5. Confirm the displayed member and laptop names match `NETBOOK_MEMBER_NAME` and `NETBOOK_DEVICE_NAME`.
 
 ## Access and privacy
 
-- Confirm non-loopback browser requests are rejected.
+- Confirm non-loopback browser requests are rejected, except for `/api/v1/mobile/**`.
+- Confirm an Android registration, heartbeat, sync, or device-list request without its bearer token returns `401`.
 - Confirm API responses use `Cache-Control: no-store`.
 - Confirm CSP, frame, referrer, and permissions headers are present.
 - Confirm no third-party script, font, analytics, advertisement, or remote image is requested.
@@ -22,15 +23,18 @@ This checklist validates the real runtime configuration. It must not use invente
 
 - With no authenticated Android heartbeat, confirm the admin page shows zero connected mobile devices.
 - Confirm the page never displays sample phone names or invented connection activity.
-- After Android registration is implemented, confirm each row shows the registered member, editable device name, `SharedNoteBook Android`, manufacturer/model, stable short ID, and current status.
-- Stop Android heartbeats and confirm the device becomes `Offline` after the configured threshold instead of remaining `Connected`.
+- Register an Android device and confirm its row shows the submitted member, device name, `NetBook Android`, model, stable short ID, and current status.
+- Stop Android heartbeats and confirm the device becomes `Offline` after the configured 20-minute threshold instead of remaining `Connected`.
 - Reconnect the same Android identity and confirm the existing row updates rather than creating a duplicate.
 - Block and revoke a device and confirm its status and ability to reconnect change correctly.
 
 ## Shared notes
 
-- Before Android reconciliation, confirm note creation is disabled with a clear connection explanation.
-- After authenticated reconciliation is implemented, verify list, search, create, edit, revisions, conflicts, durable PostgreSQL acknowledgement, and separate Android-propagation state using real household data.
+- Create a shared note in the browser and confirm it is committed to PostgreSQL before the success message is returned.
+- Register Android device A, create a shared note on it, and confirm it appears in the browser after the one-time sync completes.
+- Register Android device B and confirm it receives notes created by the browser and Android device A after synchronization.
+- Confirm private Android notes never appear in the browser or on Android device B.
+- Make divergent edits while devices are offline and confirm the browser marks the resulting current note as conflicted. The current release does not yet provide a conflict-resolution editor.
 
 ## Administration
 

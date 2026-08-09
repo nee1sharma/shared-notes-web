@@ -1,4 +1,4 @@
-package com.histudio.web.sharednotebook.config;
+package com.histudio.web.netbook.config;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -20,7 +20,7 @@ public class LoopbackOnlyFilter extends OncePerRequestFilter {
 	private final boolean loopbackOnly;
 
 	public LoopbackOnlyFilter(
-			@Value("${shared-notebook.web.root-admin-loopback-only:true}") boolean loopbackOnly) {
+			@Value("${netbook.web.root-admin-loopback-only:true}") boolean loopbackOnly) {
 		this.loopbackOnly = loopbackOnly;
 	}
 
@@ -29,10 +29,11 @@ public class LoopbackOnlyFilter extends OncePerRequestFilter {
 			HttpServletRequest request,
 			HttpServletResponse response,
 			FilterChain filterChain) throws ServletException, IOException {
-		if (loopbackOnly && !isLoopback(request.getRemoteAddr())) {
+		boolean mobileProtocolRequest = request.getRequestURI().startsWith("/api/v1/mobile/");
+		if (loopbackOnly && !mobileProtocolRequest && !isLoopback(request.getRemoteAddr())) {
 			response.setStatus(HttpServletResponse.SC_FORBIDDEN);
 			response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-			response.getWriter().write("{\"code\":\"loopback_required\",\"message\":\"SharedNoteBook web access is limited to the host device.\"}");
+			response.getWriter().write("{\"code\":\"loopback_required\",\"message\":\"NetBook web access is limited to the host device.\"}");
 			return;
 		}
 

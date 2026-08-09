@@ -1,4 +1,4 @@
-package com.histudio.web.sharednotebook.config;
+package com.histudio.web.netbook.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -34,6 +34,7 @@ public class SecurityConfig {
 			.addFilterBefore(loopbackOnlyFilter, org.springframework.security.web.context.SecurityContextHolderFilter.class)
 			.authorizeHttpRequests(authorize -> authorize.anyRequest().permitAll())
 			.csrf(csrf -> csrf
+				.ignoringRequestMatchers("/api/v1/mobile/**")
 				.csrfTokenRepository(csrfRepository)
 				.csrfTokenRequestHandler(requestHandler))
 			.headers(headers -> headers

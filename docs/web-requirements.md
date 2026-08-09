@@ -1,4 +1,4 @@
-# SharedNoteBook Web Companion Requirements
+# NetBook Web Companion Requirements
 
 **Companion specifications:** [Android requirements](requirements.md), [Web design](web-design.md)
 **Document status:** Product baseline for the web companion
@@ -9,7 +9,7 @@
 
 ## 1. Product definition
 
-The SharedNoteBook web companion is hosted by the stateful Spring Boot application on the designated admin laptop. It lets a household member use the family's shared notebook from a browser without installing a separate client and without requiring an internet service.
+The NetBook web companion is hosted by the stateful Spring Boot application on the designated admin laptop. It lets people on the same network use the household's shared notebook from a browser without installing a separate client and without requiring an internet service.
 
 The backend stores the complete shared household dataset in PostgreSQL, runs the discovery/registry service, commits browser edits, and reconciles them with registered Android peers. Android devices remain capable of editing and peer-synchronizing while the laptop backend is stopped.
 
@@ -26,7 +26,7 @@ Secondary priority affects delivery order, not the production security boundary.
 
 ## 2. Terminology
 
-- **Web companion:** The browser-based SharedNoteBook interface.
+- **Web companion:** The browser-based NetBook interface.
 - **Web device:** A browser profile on a laptop, desktop, or tablet that has a stable web-device identity.
 - **Accepted web device:** A web device authorized to access the household under its current web-access policy.
 - **New web device:** A browser profile that does not present a valid accepted web-device identity.
@@ -197,7 +197,7 @@ High-risk admin actions remain subject to reauthentication rules defined by the 
 - **WEB-FR-127:** Admins shall be able to terminate one active web session without revoking the accepted web device.
 - **WEB-FR-128:** Device status shall be eventually consistent and shall include a latest-known or last-seen time.
 - **WEB-FR-129:** Every Android device row shall use the member name and editable device name supplied by the authenticated Android registration record.
-- **WEB-FR-130:** Every connected Android row shall show app name `SharedNoteBook Android`, manufacturer/model, platform, stable short ID, connection start, and last authenticated heartbeat when available.
+- **WEB-FR-130:** Every connected Android row shall show app name `NetBook Android`, manufacturer/model, platform, stable short ID, connection start, and last authenticated heartbeat when available.
 - **WEB-FR-131:** A device shall be shown as `Connected` only while its authenticated presence is within the configured heartbeat window; otherwise it shall be `Offline` with its last-seen time.
 - **WEB-FR-132:** The web application shall not seed or display fabricated Android devices, member names, note activity, or connectivity counts.
 

@@ -1,13 +1,13 @@
-package com.histudio.web.sharednotebook;
+package com.histudio.web.netbook;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class SharedNotebookApplication {
+public class NetBookApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(SharedNotebookApplication.class, args);
+		SpringApplication.run(NetBookApplication.class, args);
 	}
 
 }

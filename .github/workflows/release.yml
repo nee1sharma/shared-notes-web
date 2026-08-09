@@ -52,13 +52,13 @@ jobs:
 
       - name: Prepare release assets
         run: |
-          mapfile -t jar_files < <(find target -maxdepth 1 -type f -name 'shared-notebook-*.jar' | sort)
+          mapfile -t jar_files < <(find target -maxdepth 1 -type f -name 'netbook-*.jar' | sort)
           if [[ "${#jar_files[@]}" -ne 1 ]]; then
-            echo "Expected exactly one packaged SharedNoteBook JAR, found ${#jar_files[@]}."
+            echo "Expected exactly one packaged NetBook JAR, found ${#jar_files[@]}."
             exit 1
           fi
-          cp "${jar_files[0]}" "target/shared-notebook-${RELEASE_TAG}.jar"
-          sha256sum "target/shared-notebook-${RELEASE_TAG}.jar" > "target/shared-notebook-${RELEASE_TAG}.jar.sha256"
+          cp "${jar_files[0]}" "target/netbook-${RELEASE_TAG}.jar"
+          sha256sum "target/netbook-${RELEASE_TAG}.jar" > "target/netbook-${RELEASE_TAG}.jar.sha256"
 
       - name: Publish GitHub Release
         env:
@@ -66,16 +66,16 @@ jobs:
         run: |
           if gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             gh release upload "$RELEASE_TAG" \
-              "target/shared-notebook-${RELEASE_TAG}.jar" \
-              "target/shared-notebook-${RELEASE_TAG}.jar.sha256" \
+              "target/netbook-${RELEASE_TAG}.jar" \
+              "target/netbook-${RELEASE_TAG}.jar.sha256" \
               --clobber \
               --repo "$GITHUB_REPOSITORY"
           else
             gh release create "$RELEASE_TAG" \
-              "target/shared-notebook-${RELEASE_TAG}.jar" \
-              "target/shared-notebook-${RELEASE_TAG}.jar.sha256" \
+              "target/netbook-${RELEASE_TAG}.jar" \
+              "target/netbook-${RELEASE_TAG}.jar.sha256" \
               --verify-tag \
               --generate-notes \
-              --title "SharedNoteBook ${RELEASE_TAG}" \
+              --title "NetBook ${RELEASE_TAG}" \
               --repo "$GITHUB_REPOSITORY"
           fi

@@ -16,7 +16,7 @@ export class ApiError extends Error {
   current?: NoteDetail
 
   constructor(status: number, body: ApiFailureBody) {
-    super(body.message ?? 'SharedNoteBook could not complete the request.')
+    super(body.message ?? 'NetBook could not complete the request.')
     this.status = status
     this.code = body.code
     this.current = body.current

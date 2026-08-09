@@ -1,4 +1,4 @@
-package com.histudio.web.sharednotebook.web;
+package com.histudio.web.netbook.web;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;

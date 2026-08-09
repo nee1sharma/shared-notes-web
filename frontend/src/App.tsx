@@ -125,7 +125,7 @@ function ApplicationLoading() {
       <BrandMark large />
       <div className="launch-copy">
         <p className="eyebrow">Opening the family notebook</p>
-        <h1>SharedNoteBook</h1>
+        <h1>NetBook</h1>
         <div className="loading-line"><span /></div>
       </div>
     </main>
@@ -146,14 +146,14 @@ function BackendUnavailable({ onRetry }: { onRetry: () => Promise<void> }) {
       <section className="unavailable-card">
         <BrandMark large />
         <p className="eyebrow">Host device not ready</p>
-        <h1>Start SharedNoteBook on this laptop</h1>
+        <h1>Start NetBook on this laptop</h1>
         <p className="unavailable-lede">
-          The notebook opens here only while the local SharedNoteBook service and PostgreSQL are running.
+          The notebook opens here only while the local NetBook service and PostgreSQL are running.
           Mobile notes continue to work independently.
         </p>
         <ol className="startup-steps">
-          <li><span>1</span><div><strong>Start PostgreSQL</strong><p>Confirm the shared_notebook database is available.</p></div></li>
-          <li><span>2</span><div><strong>Start SharedNoteBook</strong><p>Supply the registered member, host-device, database, and security configuration.</p></div></li>
+          <li><span>1</span><div><strong>Start PostgreSQL</strong><p>Confirm the netbook database is available.</p></div></li>
+          <li><span>2</span><div><strong>Start NetBook</strong><p>Supply the registered member, host-device, database, and security configuration.</p></div></li>
           <li><span>3</span><div><strong>Connect Android</strong><p>Only authenticated Android apps will appear as connected household devices.</p></div></li>
         </ol>
         <button className="primary-button large" onClick={() => void retry()} disabled={retrying}>
@@ -191,7 +191,7 @@ function ApplicationShell() {
       <aside className={`navigation-rail${mobileMenu ? ' mobile-open' : ''}`}>
         <div className="rail-brand">
           <BrandMark />
-          <div><strong>SharedNoteBook</strong><span>Family notebook</span></div>
+          <div><strong>NetBook</strong><span>Network notebook</span></div>
           <button className="icon-button close-menu" onClick={() => setMobileMenu(false)} aria-label="Close navigation"><X size={20} /></button>
         </div>
         <nav className="primary-navigation" aria-label="Primary navigation">
@@ -215,7 +215,7 @@ function ApplicationShell() {
 
       <header className="mobile-app-bar">
         <button className="icon-button" onClick={() => setMobileMenu(true)} aria-label="Open navigation"><Menu size={22} /></button>
-        <div className="mobile-brand"><BrandMark /><strong>SharedNoteBook</strong></div>
+        <div className="mobile-brand"><BrandMark /><strong>NetBook</strong></div>
         <span className="avatar small"><Laptop size={15} /></span>
       </header>
 
@@ -675,7 +675,7 @@ function AdminPage() {
 
         <div className="surface-card activity-card">
           <div className="card-heading"><div><p className="eyebrow">Android applications</p><h2>Connection identity</h2></div></div>
-          <div className="empty-list"><Smartphone size={25} /><strong>{overview?.connectedMobileDevices ? `${overview.connectedMobileDevices} Android ${overview.connectedMobileDevices === 1 ? 'app' : 'apps'} connected` : 'Waiting for Android'}</strong><p>This page lists only authenticated registrations and live heartbeats from the SharedNoteBook Android application.</p></div>
+          <div className="empty-list"><Smartphone size={25} /><strong>{overview?.connectedMobileDevices ? `${overview.connectedMobileDevices} Android ${overview.connectedMobileDevices === 1 ? 'app' : 'apps'} connected` : 'Waiting for Android'}</strong><p>This page lists only authenticated registrations and live heartbeats from the NetBook Android application.</p></div>
         </div>
       </section>
     </main>

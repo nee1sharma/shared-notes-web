@@ -1,4 +1,4 @@
-# SharedNoteBook Web Companion Product and Application Design
+# NetBook Web Companion Product and Application Design
 
 **Companion specifications:** [Web requirements](web-requirements.md), [Android design](design.md)
 **Document status:** Version 1 interaction and technical design
@@ -179,8 +179,8 @@ If PostgreSQL already contains a different child of `R17`, the backend returns a
 
 **Content:**
 
-- SharedNoteBook identity.
-- `Start SharedNoteBook on this laptop` explanation.
+- NetBook identity.
+- `Start NetBook on this laptop` explanation.
 - Short steps for checking the Spring Boot process, PostgreSQL, configured localhost port, and discovery listener.
 - Retry action.
 - Browser-specific troubleshooting only after a failure is detected.
@@ -489,7 +489,7 @@ The root of this repository.
 Recommended structure for the React and Spring Boot implementation:
 
 ```text
-shared-notebook/
+netbook/
 ├── pom.xml
 ├── frontend/
 │   ├── package.json
@@ -612,11 +612,11 @@ Every version 1 deployment setting and every admin-editable default/bound has a 
 ```yaml
 spring:
   application:
-    name: shared-notebook
+    name: netbook
   datasource:
-    url: ${SNB_DB_URL:jdbc:postgresql://localhost:5432/shared_notebook}
-    username: ${SNB_DB_USER:shared_notebook}
-    password: ${SNB_DB_PASSWORD}
+    url: ${NETBOOK_DB_URL:jdbc:postgresql://localhost:5432/netbook}
+    username: ${NETBOOK_DB_USER:netbook}
+    password: ${NETBOOK_DB_PASSWORD}
     hikari:
       maximum-pool-size: 10
       minimum-idle: 2
@@ -631,10 +631,10 @@ server:
   port: 8080
   shutdown: graceful
 
-shared-notebook:
+netbook:
   node:
     role: ROOT_ADMIN_LAPTOP
-    id: ${SNB_NODE_ID}
+    id: ${NETBOOK_NODE_ID}
     auto-start-discovery: true
   web:
     enabled: true
@@ -643,11 +643,11 @@ shared-notebook:
     lan-bind-address: 0.0.0.0
     lan-port: 8443
     lan-https-required: true
-    tls-certificate-ref: ${SNB_TLS_CERT_REF:}
-    tls-private-key-ref: ${SNB_TLS_KEY_REF:}
+    tls-certificate-ref: ${NETBOOK_TLS_CERT_REF:}
+    tls-private-key-ref: ${NETBOOK_TLS_KEY_REF:}
   security:
-    master-key-ref: ${SNB_MASTER_KEY_REF}
-    signing-key-ref: ${SNB_SIGNING_KEY_REF}
+    master-key-ref: ${NETBOOK_MASTER_KEY_REF}
+    signing-key-ref: ${NETBOOK_SIGNING_KEY_REF}
     content-cipher: AES_256_GCM
     key-provider: OS_KEYSTORE
     admin-reauthentication: 5m
@@ -655,19 +655,19 @@ shared-notebook:
     authentication-lockout: 15m
     passkeys:
       enabled: true
-      relying-party-id: ${SNB_PASSKEY_RP_ID:localhost}
-      relying-party-name: SharedNoteBook
+      relying-party-id: ${NETBOOK_PASSKEY_RP_ID:localhost}
+      relying-party-name: NetBook
       allowed-origins:
-        - ${SNB_PASSKEY_ORIGIN:http://localhost:8080}
+        - ${NETBOOK_PASSKEY_ORIGIN:http://localhost:8080}
       user-verification: REQUIRED
       attestation: NONE
       challenge-timeout: 2m
       max-credentials-per-admin: 5
   home-lan:
-    profile-ref: ${SNB_HOME_LAN_PROFILE_REF}
+    profile-ref: ${NETBOOK_HOME_LAN_PROFILE_REF}
   discovery:
     enabled: true
-    service-type: _sharednotebook._tcp.local.
+    service-type: _netbook._tcp.local.
     bind-address: 0.0.0.0
     port: 7843
     heartbeat-interval: 15s
