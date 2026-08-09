@@ -1,41 +1,25 @@
 # SharedNoteBook Web Companion
 
-SharedNoteBook is a local-first household notebook that runs on a designated host device. The current prototype host is the `hitstudio` laptop. The web companion lets household members work with shared notes in a browser while Spring Boot owns authentication, administration, durable PostgreSQL commits, and synchronization with registered mobile devices, including Android phones and iPhones.
+SharedNoteBook is a local-first household notebook hosted on the designated laptop. Household members use the browser for shared notes, while administration is available only in the web companion. Android continues to own private notes and can synchronize shared notes directly with registered peers when the laptop is unavailable.
 
-The browser is a temporary interface, not an independent notebook peer. Private Android notes are never exposed on the web.
-
-> [!IMPORTANT]
-> The current codebase implements the first project slice with synthetic household data. It is suitable for interface and integration development only. Do not use the `prototype` profile with real household content.
+This repository contains the Java 21 backend and React frontend. It contains no sample household, fake mobile-device records, or synthetic note profile. Device and member names shown by the web application must come from configured host identity or authenticated SharedNoteBook Android registrations.
 
 ## Current implementation
 
-The first slice includes:
+- Spring Boot application with loopback-only web access, CSRF protection, strict browser headers, and PostgreSQL/Flyway configuration.
+- React and TypeScript application for shared notes, connection state, and web-only administration.
+- Runtime session status using the configured member and host-device identity.
+- Honest empty states until a registered Android app connects and reconciles household data.
+- Device presentation prepared for registered member name, editable device name, app name, hardware model, platform, stable identifier, connection state, and last-seen time.
+- Integrated Maven frontend build.
 
-- A responsive React and TypeScript application for laptop, tablet, and narrow-window layouts.
-- Shared-note listing, searching, filtering, sorting, creation, editing, and revision previews.
-- Separate PostgreSQL-save and Android-propagation status surfaces.
-- Connection and synchronization status pages.
-- An initial household administration overview.
-- A synthetic in-memory Spring API for development.
-- CSRF protection, loopback enforcement, Content Security Policy, anti-framing headers, and no-cache API responses.
-- A PostgreSQL Flyway baseline using encrypted payload columns rather than plaintext note indexes.
-- A Maven lifecycle that builds the frontend and packages it into the Spring Boot application.
-
-Not yet implemented:
-
-- Root-admin passkey bootstrap and WebAuthn verification.
-- Remembered web-device enrollment and approval.
-- PostgreSQL-backed note services and encrypted content handling.
-- Authenticated Android discovery, heartbeat presence, and reconciliation.
-- Full conflict resolution, trash, private-delivery jobs, activity history, and policy controls.
-
-See [web-design.md](docs/web-design.md) and [web-requirements.md](docs/web-requirements.md) for the complete product definition.
+Android discovery, authenticated registration/heartbeat, PostgreSQL note reconciliation, passkey bootstrap, and persistent admin operations remain implementation work. Until Android reconciliation is complete, the UI shows no Android devices or shared notes instead of invented values.
 
 ## Technology
 
 | Area | Technology |
 |---|---|
-| Backend | Spring Boot 4.1, Java 25 |
+| Backend | Spring Boot 4.1, Java 21 |
 | Frontend | React 19, TypeScript, Vite |
 | Database | PostgreSQL with Flyway migrations |
 | Security foundation | Spring Security, CSRF, loopback-only listener, strict browser headers |
@@ -48,51 +32,50 @@ shared-notebook/
 ├── frontend/                       React, TypeScript, and Vite application
 ├── src/main/java/                  Spring Boot configuration and APIs
 ├── src/main/resources/
-│   ├── application.yaml            Production defaults and safe bounds
-│   ├── application-prototype.yaml  Synthetic development profile
+│   ├── application.yaml            Runtime configuration and safe bounds
 │   └── db/migration/               Flyway PostgreSQL migrations
-├── docs/                            Product specifications and smoke checklist
+├── docs/                            Product specifications and acceptance checklist
 ├── pom.xml                          Backend and integrated frontend build
 └── mvnw                             Maven Wrapper
 ```
 
-## Prerequisites
+## Required configuration
 
-- Java 25.
-- Internet access for the first dependency download.
-- PostgreSQL for the default production-oriented profile.
-- Node.js and pnpm are optional for a normal Maven build because Maven downloads the pinned frontend toolchain. Install Node.js 24 and pnpm 11 locally when using Vite hot reload.
+With no identity variables, the application derives the current operating-system username and laptop hostname. Override them when the registered household names differ. Database and cryptographic variables are reserved for the persistence and Android-reconciliation implementation:
 
-## Quick start with prototype data
+```bash
+export SNB_DB_URL='jdbc:postgresql://localhost:5432/shared_notebook'
+export SNB_DB_USER='shared_notebook'
+export SNB_DB_PASSWORD='replace-with-an-external-secret'
+export SNB_NODE_ID='stable-id-for-this-laptop-service'
+export SNB_MEMBER_NAME='Your registered member name'
+export SNB_DEVICE_NAME='Your laptop name'
+export SNB_MASTER_KEY_REF='replace-with-an-os-keystore-reference'
+export SNB_SIGNING_KEY_REF='replace-with-an-os-keystore-reference'
+export SNB_HOME_LAN_PROFILE_REF='replace-with-the-trusted-network-profile-reference'
+```
 
-Build the complete application without running tests:
+Do not commit database passwords, signing keys, master keys, certificates, tokens, or household identity secrets.
+
+## Build and run
+
+Build the complete application without unit tests:
 
 ```bash
 ./mvnw clean package -DskipTests
 ```
 
-Start the packaged application with the synthetic prototype profile:
+Run it directly:
 
 ```bash
-java -jar target/shared-notebook-0.1.0.jar \
-  --spring.profiles.active=prototype
+java -jar target/shared-notebook-0.1.0.jar
 ```
 
-Open [http://localhost:8080](http://localhost:8080).
+Open [http://localhost:8080](http://localhost:8080) on the host laptop.
 
-The interface displays a `Prototype data` label while this profile is active. All notes and state are held in memory and reset when the application stops.
+The current runtime starts without PostgreSQL because persistent note and Android reconciliation services are not connected yet. It reports that state honestly and disables note creation. Database auto-configuration will be enabled when those real services replace the current unavailable state.
 
-## Frontend development with hot reload
-
-Start Spring Boot in one terminal:
-
-```bash
-./mvnw spring-boot:run \
-  -Dspring-boot.run.profiles=prototype \
-  -Dskip.frontend=true
-```
-
-Start Vite in another terminal:
+For frontend hot reload, run the backend normally, then:
 
 ```bash
 cd frontend
@@ -100,116 +83,41 @@ pnpm install --frozen-lockfile
 pnpm dev
 ```
 
-Open the localhost URL printed by Vite. Development API calls under `/api` are proxied to Spring Boot on port `8080`.
+## Device-name contract
 
-## Production-oriented configuration
+The administration UI must never generate friendly-looking Android devices. Each displayed row is built from authenticated registry and presence data:
 
-The default profile binds the web application to `127.0.0.1:8080`, enables PostgreSQL and Flyway, and keeps non-local web access disabled. It expects these values to be supplied externally:
+- Registered member name.
+- User-editable device name.
+- Application name, such as `SharedNoteBook Android`.
+- Android hardware manufacturer/model.
+- Platform and device type.
+- Stable short device identifier.
+- Accepted, connected, offline, blocked, revoked, or pending status.
+- Connection start and last authenticated heartbeat.
 
-```bash
-export SNB_DB_URL='jdbc:postgresql://localhost:5432/shared_notebook'
-export SNB_DB_USER='shared_notebook'
-export SNB_DB_PASSWORD='replace-with-an-external-secret'
-export SNB_NODE_ID='replace-with-the-host-device-node-id'
-export SNB_DEVICE_NAME='hitstudio'
-export SNB_DEVICE_TYPE='LAPTOP'
-export SNB_DEVICE_PLATFORM='WEB'
-export SNB_MASTER_KEY_REF='replace-with-an-os-keystore-reference'
-export SNB_SIGNING_KEY_REF='replace-with-an-os-keystore-reference'
-export SNB_HOME_LAN_PROFILE_REF='replace-with-the-trusted-network-profile-reference'
-```
-
-Do not commit real secret values or key material. The default profile currently provides the configuration and database foundation; production authentication and persistent note services are still pending later implementation slices.
-
-## Available prototype APIs
-
-| Method | Endpoint | Purpose |
-|---|---|---|
-| `GET` | `/api/v1/session` | Current synthetic member, typed device, CSRF token, and connection state |
-| `GET` | `/api/v1/shared-notes` | Searchable shared-note summaries with opaque cursor support |
-| `GET` | `/api/v1/shared-notes/{noteId}` | Note content and retained revisions |
-| `POST` | `/api/v1/shared-notes` | Create a synthetic shared note |
-| `PUT` | `/api/v1/shared-notes/{noteId}` | Save a note using parent revision and idempotency identifiers |
-| `POST` | `/api/v1/synchronization` | Simulate reconciliation with reachable Android peers |
-| `GET` | `/api/v1/admin/overview` | Synthetic household administration totals |
-
-Mutating API requests require the CSRF token returned by the session endpoint. The React client handles this automatically.
+A missing heartbeat produces `Offline` with a last-seen time. It must not be shown as connected.
 
 ## Security boundaries
 
-- The web listener binds to loopback by default.
-- The loopback filter rejects non-local requests even if the listener is accidentally rebound.
-- LAN web access remains disabled until trusted HTTPS can be established without warning bypasses.
+- The browser listener binds to loopback by default.
+- LAN browser access remains disabled until trusted HTTPS is configured.
 - No third-party scripts, fonts, analytics, advertisements, or remote household-session resources are loaded.
 - Note content is not written to browser local storage, session storage, or IndexedDB.
-- Password authentication is intentionally unavailable; the planned admin authentication mechanism is WebAuthn passkeys.
 - Private-note content and metadata are outside the web companion's scope.
+- Android registrations and heartbeats must be authenticated before their names or presence are displayed.
 
 ## Validation
 
-The integrated production build is:
+Unit tests are not required by the current product decision. Follow the [manual acceptance checklist](docs/manual-acceptance-checklist.md) and run:
 
 ```bash
 ./mvnw clean package -DskipTests
-```
-
-The packaged application is created at:
-
-```text
-target/shared-notebook-0.1.0.jar
-```
-
-Unit tests are not required by the current product decision. Follow the [manual smoke checklist](docs/manual-smoke-checklist.md) when validating a slice.
-
-## GitHub builds and releases
-
-Every push and pull request runs `.github/workflows/build.yml`. The workflow scans tracked files for common credential formats, builds the complete application, creates a SHA-256 checksum, and uploads the JAR as a GitHub Actions artifact for 14 days.
-
-GitHub Releases are created from semantic version tags. For example:
-
-```bash
-git tag -a v0.1.0 -m "SharedNoteBook v0.1.0"
-git push origin v0.1.0
-```
-
-The release workflow builds from the tagged source and publishes these assets:
-
-```text
-shared-notebook-v0.1.0.jar
-shared-notebook-v0.1.0.jar.sha256
-```
-
-Before pushing, run the repository secret check locally:
-
-```bash
 ./scripts/check-for-secrets.sh
 ```
-
-Enable the versioned pre-push protection once in each clone:
-
-```bash
-git config core.hooksPath .githooks
-```
-
-The hook runs the same secret check automatically and cancels the push when it detects a sensitive path, a high-confidence credential, a literal configuration secret, or a developer-specific absolute home path.
-
-Keep database passwords, signing keys, master keys, certificate material, access tokens, and environment-specific configuration outside Git. Store CI-only values in GitHub Actions secrets. Enable GitHub secret scanning and push protection in the repository settings when available.
-
-## Implementation roadmap
-
-The planned slices are defined in detail in the product design:
-
-1. Full-stack foundation with synthetic notes — current slice.
-2. Root-admin passkey bootstrap and secure-origin verification.
-3. Authenticated Android discovery and reconciliation.
-4. Device identity, typed platforms, remembered acceptance, and global device management.
-5. PostgreSQL-backed note listing, filtering, editing, and immutable revision saves.
-6. Mobile propagation, outage recovery, and conflict resolution.
-7. Revision/activity history, trash, purge, and private delivery.
-8. Policy controls, delegated admins, device revocation, accessibility, and browser-matrix verification.
 
 ## Project documents
 
 - [Product and application design](docs/web-design.md)
 - [Web companion requirements](docs/web-requirements.md)
-- [Manual smoke checklist](docs/manual-smoke-checklist.md)
+- [Manual acceptance checklist](docs/manual-acceptance-checklist.md)

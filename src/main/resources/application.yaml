@@ -1,6 +1,10 @@
 spring:
   application:
     name: shared-notebook
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration
+      - org.springframework.boot.flyway.autoconfigure.FlywayAutoConfiguration
   datasource:
     url: ${SNB_DB_URL:jdbc:postgresql://localhost:5432/shared_notebook}
     username: ${SNB_DB_USER:shared_notebook}
@@ -27,11 +31,12 @@ server:
       timeout: 30m
 
 shared-notebook:
-  prototype-mode: false
   node:
     role: ROOT_ADMIN_HOST
-    id: ${SNB_NODE_ID}
-    name: ${SNB_DEVICE_NAME:hitstudio}
+    id: ${SNB_NODE_ID:}
+    name: ${SNB_DEVICE_NAME:}
+    member-name: ${SNB_MEMBER_NAME:}
+    app-name: SharedNoteBook Web
     type: ${SNB_DEVICE_TYPE:LAPTOP}
     platform: ${SNB_DEVICE_PLATFORM:WEB}
     auto-start-discovery: true

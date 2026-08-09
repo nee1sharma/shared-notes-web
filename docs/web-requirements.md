@@ -22,7 +22,7 @@ The web companion is also the household's exclusive administrative surface. Andr
 - **Primary:** Open the notebook on the admin laptop, view and edit shared notes, save durably to PostgreSQL, and show honest database and Android-propagation state.
 - **Secondary:** Persistent web-device acceptance, member authorization, configurable approval, and admin connected-device management.
 
-Secondary priority affects delivery order, not the production security boundary. Early primary-workflow prototypes may use synthetic notes, but a production build must not expose real household content before the acceptance and authorization requirements are complete.
+Secondary priority affects delivery order, not the production security boundary. Development and production builds shall not invent household members, notes, devices, presence, or activity. Before real Android reconciliation is available, the UI shall use an honest empty or unavailable state.
 
 ## 2. Terminology
 
@@ -54,7 +54,7 @@ Secondary priority affects delivery order, not the production security boundary.
 
 ### 3.1 Engineering constraints
 
-- The backend shall use Spring Boot 4.1 and support Java 21 or newer. The existing project currently targets Java 25.
+- The backend shall use Spring Boot 4.1 on Java 21.
 - PostgreSQL is required, with versioned Flyway migrations.
 - The frontend shall use React with TypeScript and a Vite-based build.
 - Frontend and backend source shall live in this single repository.
@@ -196,6 +196,10 @@ High-risk admin actions remain subject to reauthentication rules defined by the 
 - **WEB-FR-126:** Revocation shall not claim to erase information a user already saw, copied, printed, or manually saved.
 - **WEB-FR-127:** Admins shall be able to terminate one active web session without revoking the accepted web device.
 - **WEB-FR-128:** Device status shall be eventually consistent and shall include a latest-known or last-seen time.
+- **WEB-FR-129:** Every Android device row shall use the member name and editable device name supplied by the authenticated Android registration record.
+- **WEB-FR-130:** Every connected Android row shall show app name `SharedNoteBook Android`, manufacturer/model, platform, stable short ID, connection start, and last authenticated heartbeat when available.
+- **WEB-FR-131:** A device shall be shown as `Connected` only while its authenticated presence is within the configured heartbeat window; otherwise it shall be `Offline` with its last-seen time.
+- **WEB-FR-132:** The web application shall not seed or display fabricated Android devices, member names, note activity, or connectivity counts.
 
 ### 5.8 Browser compatibility and accessibility
 

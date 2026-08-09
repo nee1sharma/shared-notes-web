@@ -647,7 +647,6 @@ p {
   color: #75807c;
 }
 
-.prototype-badge,
 .subtle-chip {
   padding: 4px 8px;
   margin-left: 12px;
@@ -1910,9 +1909,6 @@ p {
 
   .connection-strip .connection-strip-item:first-child,
   .connection-strip .status-divider,
-  .connection-strip .prototype-badge {
-    display: none;
-  }
 
   .notes-workspace {
     display: block;

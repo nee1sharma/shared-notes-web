@@ -1,6 +1,5 @@
 import {
   Activity,
-  Archive,
   ArrowLeft,
   BookOpen,
   Check,
@@ -10,7 +9,6 @@ import {
   Clock3,
   Database,
   FileClock,
-  KeyRound,
   Laptop,
   LoaderCircle,
   LogOut,
@@ -148,15 +146,15 @@ function BackendUnavailable({ onRetry }: { onRetry: () => Promise<void> }) {
       <section className="unavailable-card">
         <BrandMark large />
         <p className="eyebrow">Host device not ready</p>
-        <h1>Start SharedNoteBook on hitstudio</h1>
+        <h1>Start SharedNoteBook on this laptop</h1>
         <p className="unavailable-lede">
-          The notebook opens here only while the local Spring Boot service on hitstudio and PostgreSQL are running.
+          The notebook opens here only while the local SharedNoteBook service and PostgreSQL are running.
           Mobile notes continue to work independently.
         </p>
         <ol className="startup-steps">
           <li><span>1</span><div><strong>Start PostgreSQL</strong><p>Confirm the shared_notebook database is available.</p></div></li>
-          <li><span>2</span><div><strong>Start the hitstudio backend</strong><p>Use the prototype profile for this first implementation slice.</p></div></li>
-          <li><span>3</span><div><strong>Keep this address local</strong><p>Version 1 web access is limited to localhost on hitstudio.</p></div></li>
+          <li><span>2</span><div><strong>Start SharedNoteBook</strong><p>Supply the registered member, host-device, database, and security configuration.</p></div></li>
+          <li><span>3</span><div><strong>Connect Android</strong><p>Only authenticated Android apps will appear as connected household devices.</p></div></li>
         </ol>
         <button className="primary-button large" onClick={() => void retry()} disabled={retrying}>
           <RefreshCw size={18} className={retrying ? 'spin' : ''} />
@@ -256,10 +254,9 @@ function ConnectionStrip() {
       <span className="status-divider" />
       <span className={`connection-strip-item${pending ? ' pending' : ''}`}>
         {pending ? <Clock3 size={15} /> : <Check size={15} />}
-        {pending ? `Saved to ${session.device.name} · ${session.pendingChanges} mobile ${session.pendingChanges === 1 ? 'change' : 'changes'} pending` : `All edits saved to ${session.device.name}`}
+        {!session.notesAvailable ? 'No Android notebook connected' : pending ? `Saved to ${session.device.name} · ${session.pendingChanges} mobile ${session.pendingChanges === 1 ? 'change' : 'changes'} pending` : `All edits saved to ${session.device.name}`}
       </span>
       <span className="connection-strip-peers"><Smartphone size={14} /> {session.reachablePeers} household peers reachable</span>
-      {session.prototype && <span className="prototype-badge">Prototype data</span>}
     </div>
   )
 }
@@ -267,7 +264,7 @@ function ConnectionStrip() {
 function NotesWorkspace() {
   const { noteId } = useParams()
   const navigate = useNavigate()
-  const { refreshSession } = useSession()
+  const { session, refreshSession } = useSession()
   const [notes, setNotes] = useState<NoteSummary[]>([])
   const [query, setQuery] = useState('')
   const [searchField, setSearchField] = useState('TITLE')
@@ -332,6 +329,10 @@ function NotesWorkspace() {
   }
 
   const startNote = async () => {
+    if (!session.notesAvailable) {
+      setListError('Connect a registered Android app before creating a shared note from this laptop.')
+      return
+    }
     try {
       const result = await createNote('Untitled note', '')
       setListVersion(version => version + 1)
@@ -358,7 +359,7 @@ function NotesWorkspace() {
             <h1>Shared notes</h1>
             <p>{loading ? 'Loading…' : `${totalMatches} ${totalMatches === 1 ? 'note' : 'notes'} available to everyone`}</p>
           </div>
-          <button className="primary-button compact" onClick={() => void startNote()}><Plus size={18} /> New note</button>
+          <button className="primary-button compact" onClick={() => void startNote()} disabled={!session.notesAvailable} title={!session.notesAvailable ? 'Connect a registered Android app first' : undefined}><Plus size={18} /> New note</button>
         </div>
 
         <div className="search-row">
@@ -396,7 +397,7 @@ function NotesWorkspace() {
         <div className="note-list" aria-busy={loading}>
           {loading && notes.length === 0 ? <NoteListSkeleton /> : null}
           {!loading && notes.length === 0 ? (
-            <div className="empty-list"><Search size={25} /><strong>No shared notes match</strong><p>Try a different search or clear the filters.</p></div>
+            <div className="empty-list"><Search size={25} /><strong>{session.notesAvailable ? 'No shared notes match' : 'No Android notebook connected'}</strong><p>{session.notesAvailable ? 'Try a different search or clear the filters.' : 'Authenticated Android apps and their real registered names will appear after discovery and reconciliation.'}</p></div>
           ) : null}
           {notes.map(note => (
             <button key={note.id} className={`note-row${activeId === note.id ? ' selected' : ''}`} onClick={() => navigate(`/notes/${note.id}`)}>
@@ -414,7 +415,7 @@ function NotesWorkspace() {
       </section>
 
       <section className="editor-pane" aria-label="Note editor">
-        {activeId ? <NoteEditor key={activeId} noteId={activeId} onChanged={refreshList} /> : <NoNoteSelected onCreate={startNote} />}
+        {activeId ? <NoteEditor key={activeId} noteId={activeId} onChanged={refreshList} /> : <NoNoteSelected onCreate={startNote} enabled={session.notesAvailable} />}
       </section>
     </main>
   )
@@ -430,13 +431,13 @@ function NoteListSkeleton() {
   return <>{[0, 1, 2, 3].map(item => <div className="note-row-skeleton" key={item}><span /><span /><span /></div>)}</>
 }
 
-function NoNoteSelected({ onCreate }: { onCreate: () => Promise<void> }) {
+function NoNoteSelected({ onCreate, enabled }: { onCreate: () => Promise<void>; enabled: boolean }) {
   return (
     <div className="no-note-selected">
       <div className="paper-stack"><BookOpen size={32} /></div>
       <h2>Open a shared note</h2>
-      <p>Select a note from the list or begin a new page for the household.</p>
-      <button className="primary-button" onClick={() => void onCreate()}><Plus size={18} /> New shared note</button>
+      <p>{enabled ? 'Select a note from the list or begin a new page for the household.' : 'Connect a registered Android app to load the household notebook.'}</p>
+      <button className="primary-button" onClick={() => void onCreate()} disabled={!enabled}><Plus size={18} /> New shared note</button>
     </div>
   )
 }
@@ -619,7 +620,7 @@ function ConnectionPage() {
       {message && <div className="success-banner" role="status"><CheckCircle2 size={18} />{message}</div>}
       <section className="status-layers" aria-label="Connection layers">
         <StatusLayer icon={Laptop} tone="good" eyebrow="Browser session" title={`Connected to ${session.device.name}`} detail={`${deviceKind(session.device)} · ${session.device.shortId}`} />
-        <StatusLayer icon={Database} tone="good" eyebrow="PostgreSQL commit" title="All acknowledged edits saved" detail={`${session.device.name} is ready for durable commits.`} />
+        <StatusLayer icon={Database} tone={session.databaseStatus === 'READY' ? 'good' : 'pending'} eyebrow="PostgreSQL commit" title={session.databaseStatus === 'READY' ? 'All acknowledged edits saved' : 'Persistence not connected'} detail={session.databaseStatus === 'READY' ? `${session.device.name} is ready for durable commits.` : 'Shared notes remain unavailable until PostgreSQL and Android reconciliation are connected.'} />
         <StatusLayer icon={Smartphone} tone={session.pendingChanges ? 'pending' : 'good'} eyebrow="Mobile propagation" title={session.pendingChanges ? `${session.pendingChanges} ${session.pendingChanges === 1 ? 'change' : 'changes'} waiting` : 'No pending changes known'} detail={`${session.reachablePeers} household peers globally connected`} />
       </section>
 
@@ -645,6 +646,7 @@ function StatusLayer({ icon: Icon, tone, eyebrow, title, detail }: { icon: Lucid
 }
 
 function AdminPage() {
+  const { session } = useSession()
   const [overview, setOverview] = useState<AdminOverview | null>(null)
   const [error, setError] = useState('')
 
@@ -655,7 +657,7 @@ function AdminPage() {
   return (
     <main className="page-shell admin-page">
       <PageHeading eyebrow="Household administration" title="Admin overview" description="Manage access, devices, shared-note health, and household policy from the designated host device." action={<button className="secondary-button"><Settings2 size={17} /> Household settings</button>} />
-      <div className="eventual-banner"><Activity size={17} /><span><strong>Latest-known household state</strong> Device presence updates while the hitstudio backend receives authenticated heartbeats.</span></div>
+      <div className="eventual-banner"><Activity size={17} /><span><strong>Latest-known household state</strong> Device presence updates while {session.backendName} receives authenticated heartbeats.</span></div>
       {error && <div className="inline-error"><CircleAlert size={16} />{error}</div>}
       <section className="metric-grid">
         <MetricCard label="Laptop devices" value={overview?.registeredLaptopDevices} helper={`${overview?.connectedLaptopDevices ?? '—'} connected now`} icon={Laptop} />
@@ -668,22 +670,13 @@ function AdminPage() {
         <div className="surface-card devices-card">
           <div className="card-heading"><div><p className="eyebrow">Connected now</p><h2>Household devices</h2></div><button className="text-button">View all <ChevronRight size={15} /></button></div>
           {overview?.devices.map(device => <DeviceRow key={device.id} device={device} />)}
+          {overview && overview.devices.length === 0 ? <div className="empty-list"><WifiOff size={23} /><strong>No household devices registered</strong><p>Connected Android apps will appear with their registered member, device, app, model, and status.</p></div> : null}
         </div>
 
         <div className="surface-card activity-card">
-          <div className="card-heading"><div><p className="eyebrow">Recent household events</p><h2>Activity</h2></div><button className="text-button">View history <ChevronRight size={15} /></button></div>
-          <ul className="activity-list">
-            <ActivityItem icon={BookOpen} title="hitstudio updated Sunday market list" detail="Laptop · Web · just now" />
-            <ActivityItem icon={Wifi} title="pixel-9 connected" detail="Mobile · Android · 4m ago" />
-            <ActivityItem icon={KeyRound} title="Admin session reauthenticated" detail="hitstudio · Laptop · 18m ago" />
-            <ActivityItem icon={Archive} title="Old travel list moved to trash" detail="Retained for 30 days · yesterday" />
-          </ul>
+          <div className="card-heading"><div><p className="eyebrow">Android applications</p><h2>Connection identity</h2></div></div>
+          <div className="empty-list"><Smartphone size={25} /><strong>{overview?.connectedMobileDevices ? `${overview.connectedMobileDevices} Android ${overview.connectedMobileDevices === 1 ? 'app' : 'apps'} connected` : 'Waiting for Android'}</strong><p>This page lists only authenticated registrations and live heartbeats from the SharedNoteBook Android application.</p></div>
         </div>
-      </section>
-
-      <section className="implementation-notice">
-        <span><ShieldCheck size={20} /></span>
-        <div><strong>Security foundation in progress</strong><p>This first slice uses synthetic household data. Passkey bootstrap, remembered web-device acceptance, and PostgreSQL-backed notes are the next protected implementation layers.</p></div>
       </section>
     </main>
   )
@@ -696,19 +689,16 @@ function MetricCard({ label, value, helper, icon: Icon, tone }: { label: string;
 function DeviceRow({ device }: { device: Device }) {
   const pending = device.status === 'PENDING'
   const Icon = device.type === 'MOBILE' ? Smartphone : Laptop
+  const statusLabel = device.status === 'CONNECTED' ? 'Connected' : device.status === 'OFFLINE' ? `Last seen ${relativeTime(device.lastSeenAt)}` : device.status.charAt(0) + device.status.slice(1).toLowerCase()
   return (
     <div className={`device-row${pending ? ' pending-device' : ''}`}>
       <span className={`device-icon${pending ? ' pending' : device.type === 'MOBILE' ? ' mobile' : ''}`}><Icon size={19} /></span>
-      <div><strong>{device.name}</strong><span>{deviceKind(device)} · {device.shortId} · {device.lastSeen}</span></div>
+      <div><strong>{device.name}</strong><span>{device.memberName} · {device.appName} · {device.modelName} · {device.shortId}</span></div>
       {pending
         ? <button className="secondary-button compact">Review</button>
-        : <em className="online-chip"><Wifi size={13} /> Connected</em>}
+        : <em className={device.status === 'CONNECTED' ? 'online-chip' : 'subtle-chip'}>{device.status === 'CONNECTED' ? <Wifi size={13} /> : <WifiOff size={13} />}{statusLabel}</em>}
     </div>
   )
-}
-
-function ActivityItem({ icon: Icon, title, detail }: { icon: LucideIcon; title: string; detail: string }) {
-  return <li><span><Icon size={16} /></span><div><strong>{title}</strong><p>{detail}</p></div></li>
 }
 
 function PageHeading({ eyebrow, title, description, action }: { eyebrow: string; title: string; description: string; action?: ReactNode }) {

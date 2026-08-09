@@ -11,12 +11,16 @@ export type DevicePlatform = 'WEB' | 'ANDROID' | 'IPHONE'
 
 export type Device = {
   id: string
+  memberName: string
   name: string
   shortId: string
+  appName: string
+  modelName: string
   type: DeviceType
   platform: DevicePlatform
-  status: string
-  lastSeen: string
+  status: 'CONNECTED' | 'OFFLINE' | 'PENDING' | 'BLOCKED' | 'REVOKED'
+  connectedAt: string | null
+  lastSeenAt: string
 }
 
 export type Session = {
@@ -31,7 +35,7 @@ export type Session = {
   lastSynchronizedAt: string
   syncMode: string
   csrfToken: string
-  prototype: boolean
+  notesAvailable: boolean
 }
 
 export type NoteSummary = {

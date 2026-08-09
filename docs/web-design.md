@@ -4,7 +4,7 @@
 **Document status:** Version 1 interaction and technical design
 **Last updated:** 2026-08-09
 **Implementation repository:** this repository
-**Backend runtime:** Spring Boot 4.1 on Java 21+ (current project: Java 25)
+**Backend runtime:** Spring Boot 4.1 on Java 21
 
 ## 1. Design goals
 
@@ -99,8 +99,8 @@ Use single-page navigation with a top app bar. The note list, editor, revisions,
 
 While authenticated, the application shell shows a compact connection indicator:
 
-- `Connected to hitstudio`
-- `Saved to hitstudio · Mobile propagation pending`
+- `Connected to <laptop device name>`
+- `Saved to <laptop device name> · Mobile propagation pending`
 - `2 household peers reachable`
 - `Connection interrupted`
 
@@ -155,7 +155,7 @@ No approval prompt is shown. If policy requires member unlock, it happens after 
 2. The browser keeps the editable draft in page memory.
 3. Save sends the note ID, new content, idempotency key, and parent revision `R17`.
 4. The backend validates permissions and current revision state.
-5. PostgreSQL commits `R18` durably and the backend acknowledges `Saved to hitstudio`.
+5. PostgreSQL commits `R18` durably and the backend acknowledges `Saved to <laptop device name>`.
 6. The configured synchronization mode determines when the backend reconciles Android peers.
 7. The browser updates household sync status independently of the save acknowledgement.
 
@@ -194,7 +194,7 @@ No household name, member data, or note preview is disclosed before the backend 
 **Content:**
 
 - Member-association action.
-- Editable device name, such as `hitstudio`.
+- Editable device name supplied by the registered device, such as `Family Laptop`.
 - Device type: `LAPTOP` or `MOBILE`.
 - Device platform: `WEB`, `ANDROID`, or `IPHONE`.
 - Explanation: `This browser will be remembered on this profile. You will not need approval each time.`
@@ -267,8 +267,8 @@ Search applies to all authorized current shared notes, not merely the rows alrea
 **Save states:**
 
 - `Editing`
-- `Saving to hitstudio`
-- `Saved to hitstudio`
+- `Saving to <laptop device name>`
+- `Saved to <laptop device name>`
 - `Sync pending`
 - `Synchronized with reachable peers`
 - `Connection interrupted — draft kept in this tab`
@@ -308,8 +308,8 @@ Saving the resolution produces one new revision naming all conflict parents.
 
 | Layer | Example status |
 |---|---|
-| Browser session | `Connected to hitstudio` |
-| PostgreSQL commit | `All edits saved to hitstudio` |
+| Browser session | `Connected to <laptop device name>` |
+| PostgreSQL commit | `All edits saved to <laptop device name>` |
 | Mobile propagation | `1 change waiting; 2 devices globally connected` |
 
 **Content:**
@@ -418,9 +418,9 @@ Extend filters with:
 
 Example rows:
 
-- `hitstudio was accepted automatically on the home LAN.`
-- `hitstudio opened Shopping List.`
-- `hitstudio disconnected after 20 minutes of inactivity.`
+- `<laptop device name> was accepted automatically on the home LAN.`
+- `<laptop device name> opened Shopping List.`
+- `<laptop device name> disconnected after 20 minutes of inactivity.`
 - `Admin revoked Guest Browser.`
 
 ### 6.13 Admin shared-note trash and private delivery
@@ -476,7 +476,7 @@ stateDiagram-v2
     Conflict --> LaptopSaved: Resolution committed
 ```
 
-The browser may display multiple compatible states, such as `Saved to hitstudio · Mobile propagation failed`.
+The browser may display multiple compatible states, such as `Saved to <laptop device name> · Mobile propagation failed`.
 
 ## 8. Laptop full-stack technical design
 
@@ -869,7 +869,7 @@ Spring Boot can terminate HTTPS, but certificate trust for a LAN-only hostname r
 | Passkey assertion cancelled or rejected | Preserve the non-admin session, deny the privileged action, and allow an explicit retry. |
 | Every root-admin passkey is unavailable | Administration remains locked; version 1 has no automated recovery path. |
 | Admin disables new enrollment | Accepted devices may reconnect; new devices receive a clear policy message. |
-| PostgreSQL save succeeds but mobile propagation fails | Show `Saved to hitstudio · Mobile propagation failed` with retry. |
+| PostgreSQL save succeeds but mobile propagation fails | Show `Saved to <laptop device name> · Mobile propagation failed` with retry. |
 | Parent revision is outdated | Preserve draft and open conflict resolution. |
 | `Show more` request fails | Keep already loaded rows, retain the cursor, and show a retry action without duplicating notes. |
 | Search filters change during a request | Cancel or ignore the stale response and load a fresh first page of 20. |
@@ -891,7 +891,7 @@ Spring Boot can terminate HTTPS, but certificate trust for a LAN-only hostname r
 
 ## 15. Implementation slices
 
-1. Spring Boot 4.1, Java 25, React, TypeScript, Vite, PostgreSQL, Flyway, and a loopback-only security skeleton using synthetic notes and a manual smoke checklist.
+1. Spring Boot 4.1, Java 21, React, TypeScript, Vite, PostgreSQL, Flyway, and a loopback-only production foundation with real configured identity and a manual acceptance checklist.
 2. Root-admin passkey bootstrap, Spring Security WebAuthn verification, OS-protected key reference, database lifecycle, and localhost secure-origin proof.
 3. Authenticated Android discovery, device registry, heartbeat presence, and reconciliation protocol.
 4. Web-device identity, acceptance policy, remembered reconnect, and admin global-device view.
