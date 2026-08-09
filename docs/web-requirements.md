@@ -150,7 +150,7 @@ High-risk admin actions remain subject to reauthentication rules defined by the 
 - **WEB-FR-063:** The editor shall support at least a title and plain-text body.
 - **WEB-FR-064:** A web save shall include the parent revision from which the edit was made.
 - **WEB-FR-065:** A successful web save shall first commit a new immutable revision transactionally in PostgreSQL.
-- **WEB-FR-066:** The browser shall show `Saved to laptop` only after PostgreSQL acknowledges the durable commit.
+- **WEB-FR-066:** The browser shall show `Saved to <device name>` only after PostgreSQL acknowledges the durable commit.
 - **WEB-FR-067:** The browser shall show `Synchronized` only according to the same cautious peer-to-peer semantics used by the Android application.
 - **WEB-FR-068:** An unchanged save shall not create a duplicate revision.
 - **WEB-FR-069:** Only an authenticated admin shall move a shared note to trash, restore it, permanently purge it, or initiate coordinated private delivery to an owned Android device.
@@ -295,7 +295,7 @@ Shared-note actions performed through the web companion continue to create the e
 
 The web companion adds these conceptual records:
 
-- `WebDevice`: device ID, household ID, member ID, display name, public identity, acceptance method, accepted by, acceptance time, last seen, status, and credential generation.
+- `Device`: device ID, household ID, display name, type (`LAPTOP` or `MOBILE`), platform (`WEB`, `ANDROID`, or `IPHONE`), public identity, acceptance method, accepted by, acceptance time, last seen, status, and credential generation.
 - `WebSession`: session ID, web-device ID, backend node ID, start time, last activity, expiry time, end reason, and authenticated protocol version.
 - `WebAccessPolicy`: web access enabled, new-device approval mode, enrollment enabled, idle timeout, concurrent-session rule, synchronization mode, periodic interval, version, and changing admin.
 - `AdminPasskeyCredential`: admin member ID, WebAuthn credential ID, public key, signature-counter state, transports, friendly name, creation/last-used time, and active/revoked status.

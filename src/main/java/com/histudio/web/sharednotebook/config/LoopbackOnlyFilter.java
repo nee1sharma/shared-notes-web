@@ -32,7 +32,7 @@ public class LoopbackOnlyFilter extends OncePerRequestFilter {
 		if (loopbackOnly && !isLoopback(request.getRemoteAddr())) {
 			response.setStatus(HttpServletResponse.SC_FORBIDDEN);
 			response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-			response.getWriter().write("{\"code\":\"loopback_required\",\"message\":\"SharedNoteBook web access is limited to this laptop.\"}");
+			response.getWriter().write("{\"code\":\"loopback_required\",\"message\":\"SharedNoteBook web access is limited to the host device.\"}");
 			return;
 		}
 

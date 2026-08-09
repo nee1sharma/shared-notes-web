@@ -2,6 +2,7 @@ package com.histudio.web.sharednotebook.prototype;
 
 import static com.histudio.web.sharednotebook.prototype.PrototypeModels.AdminOverview;
 import static com.histudio.web.sharednotebook.prototype.PrototypeModels.CreateNoteRequest;
+import static com.histudio.web.sharednotebook.prototype.PrototypeModels.DeviceView;
 import static com.histudio.web.sharednotebook.prototype.PrototypeModels.NoteDetail;
 import static com.histudio.web.sharednotebook.prototype.PrototypeModels.NotePage;
 import static com.histudio.web.sharednotebook.prototype.PrototypeModels.NoteSummary;
@@ -31,6 +32,13 @@ import org.springframework.stereotype.Service;
 public class PrototypeNotebookService {
 
 	private static final int MAX_PAGE_SIZE = 20;
+	private static final String CURRENT_MEMBER = "Household owner";
+	private static final String CURRENT_DEVICE = "hitstudio";
+	private static final String LAPTOP = "LAPTOP";
+	private static final String MOBILE = "MOBILE";
+	private static final String WEB = "WEB";
+	private static final String ANDROID = "ANDROID";
+	private static final String IPHONE = "IPHONE";
 
 	private final Map<UUID, MutableNote> notes = new LinkedHashMap<>();
 	private final Map<String, CursorState> cursors = new ConcurrentHashMap<>();
@@ -109,18 +117,22 @@ public class PrototypeNotebookService {
 			noteId,
 			request.title().strip(),
 			request.body(),
-			"Ravi",
-			"Ravi",
+			CURRENT_MEMBER,
+			CURRENT_MEMBER,
+			CURRENT_DEVICE,
+			LAPTOP,
+			WEB,
 			now,
 			now,
 			revisionId,
 			1,
 			false,
 			"PENDING");
-		note.revisions.add(new Revision(revisionId, 1, note.title, note.body, "Ravi", "Ravi's Work Laptop", now, "Current"));
+		note.revisions.add(new Revision(
+			revisionId, 1, note.title, note.body, CURRENT_MEMBER, CURRENT_DEVICE, LAPTOP, WEB, now, "Current"));
 		notes.put(noteId, note);
 
-		SaveResult result = new SaveResult("committed", toDetail(note), "Saved to laptop. Android propagation is pending.");
+		SaveResult result = new SaveResult("committed", toDetail(note), "Saved to hitstudio. Mobile propagation is pending.");
 		idempotentResults.put(request.idempotencyKey(), result);
 		return result;
 	}
@@ -147,7 +159,10 @@ public class PrototypeNotebookService {
 		Instant now = Instant.now();
 		note.title = title;
 		note.body = body;
-		note.lastEditedBy = "Ravi";
+		note.lastEditedBy = CURRENT_MEMBER;
+		note.originDeviceName = CURRENT_DEVICE;
+		note.originDeviceType = LAPTOP;
+		note.originDevicePlatform = WEB;
 		note.modifiedAt = now;
 		note.revisionNumber += 1;
 		note.revisionId = UUID.randomUUID();
@@ -162,14 +177,16 @@ public class PrototypeNotebookService {
 			note.title,
 			note.body,
 			note.lastEditedBy,
-			"Ravi's Work Laptop",
+			CURRENT_DEVICE,
+			LAPTOP,
+			WEB,
 			now,
 			"Current"));
 		if (note.revisions.size() > 5) {
 			note.revisions.remove(note.revisions.size() - 1);
 		}
 
-		SaveResult result = new SaveResult("committed", toDetail(note), "Saved to laptop. Android propagation is pending.");
+		SaveResult result = new SaveResult("committed", toDetail(note), "Saved to hitstudio. Mobile propagation is pending.");
 		idempotentResults.put(request.idempotencyKey(), result);
 		return result;
 	}
@@ -189,7 +206,7 @@ public class PrototypeNotebookService {
 			0,
 			lastSynchronizedAt,
 			pending == 0
-				? "No pending changes known to the laptop."
+				? "No pending changes known to hitstudio."
 				: "Reachable household peers accepted " + pending + (pending == 1 ? " change." : " changes."));
 	}
 
@@ -203,7 +220,20 @@ public class PrototypeNotebookService {
 
 	public synchronized AdminOverview adminOverview() {
 		int conflicts = (int) notes.values().stream().filter(note -> note.conflict).count();
-		return new AdminOverview(3, 2, 2, 1, 1, 1, conflicts, 0);
+		return new AdminOverview(
+			1,
+			2,
+			1,
+			2,
+			1,
+			0,
+			conflicts,
+			0,
+			List.of(
+				new DeviceView(seedId("device-hitstudio"), "hitstudio", "LAP-7A2F", LAPTOP, WEB, "CONNECTED", "Now"),
+				new DeviceView(seedId("device-pixel-9"), "pixel-9", "MOB-A91C", MOBILE, ANDROID, "CONNECTED", "Now"),
+				new DeviceView(seedId("device-iphone-15"), "iphone-15", "MOB-C42E", MOBILE, IPHONE, "CONNECTED", "2m ago"),
+				new DeviceView(seedId("device-guest-browser"), "guest-browser", "LAP-F103", LAPTOP, WEB, "PENDING", "Requested 12m ago")));
 	}
 
 	private MutableNote requireNote(UUID noteId) {
@@ -240,6 +270,9 @@ public class PrototypeNotebookService {
 			preview(note.body),
 			note.createdBy,
 			note.lastEditedBy,
+			note.originDeviceName,
+			note.originDeviceType,
+			note.originDevicePlatform,
 			note.modifiedAt,
 			"R" + note.revisionNumber,
 			"SAVED",
@@ -256,6 +289,8 @@ public class PrototypeNotebookService {
 				revision.body,
 				revision.author,
 				revision.origin,
+				revision.originDeviceType,
+				revision.originDevicePlatform,
 				revision.createdAt,
 				revision.label))
 			.toList();
@@ -265,6 +300,9 @@ public class PrototypeNotebookService {
 			note.body,
 			note.createdBy,
 			note.lastEditedBy,
+			note.originDeviceName,
+			note.originDeviceType,
+			note.originDevicePlatform,
 			note.modifiedAt,
 			note.revisionId,
 			"R" + note.revisionNumber,
@@ -295,28 +333,36 @@ public class PrototypeNotebookService {
 		Instant now = Instant.now();
 		seed("sunday-market", "Sunday market list",
 			"Vegetables\n• Tomatoes and spinach\n• Green chillies\n• Coriander\n\nPantry\n• Toor dal\n• Filter coffee\n• Jaggery\n\nRemember the flowers near the east gate.",
-			"Ravi", "Meera", now.minus(Duration.ofMinutes(18)), 17, false, "PENDING");
+			"Household owner", "Household member", "pixel-9", MOBILE, ANDROID,
+			now.minus(Duration.ofMinutes(18)), 17, false, "PENDING");
 		seed("school-week", "School week",
 			"Monday: science model materials\nWednesday: library book return\nFriday: blue house T-shirt and water bottle",
-			"Meera", "Meera", now.minus(Duration.ofHours(2)), 9, false, "SYNCED");
+			"Household member", "Household member", "iphone-15", MOBILE, IPHONE,
+			now.minus(Duration.ofHours(2)), 9, false, "SYNCED");
 		seed("garden", "Balcony garden notes",
 			"Move the basil away from the strongest afternoon sun. The jasmine needs a deeper pot before the next rain.",
-			"Amma", "Ravi", now.minus(Duration.ofHours(6)), 12, false, "SYNCED");
+			"Household member", "Household owner", CURRENT_DEVICE, LAPTOP, WEB,
+			now.minus(Duration.ofHours(6)), 12, false, "SYNCED");
 		seed("monsoon", "Monsoon prep",
 			"Check balcony drain, replace the study window seal, and keep two charged torches in the hall cupboard.",
-			"Ravi", "Ravi", now.minus(Duration.ofDays(1)), 6, false, "SYNCED");
+			"Household owner", "Household owner", CURRENT_DEVICE, LAPTOP, WEB,
+			now.minus(Duration.ofDays(1)), 6, false, "SYNCED");
 		seed("repairs", "Household repairs",
 			"Kitchen tap washer\nGuest room fan regulator\nLoose hinge on the shoe cabinet",
-			"Ravi", "Meera", now.minus(Duration.ofDays(2)), 14, true, "PENDING");
+			"Household owner", "Household member", "pixel-9", MOBILE, ANDROID,
+			now.minus(Duration.ofDays(2)), 14, true, "PENDING");
 		seed("diwali", "Diwali guest plan",
 			"Confirm train times with Chithappa. Prepare the guest room on Thursday and order extra floor cushions.",
-			"Meera", "Amma", now.minus(Duration.ofDays(3)), 8, false, "SYNCED");
+			"Household member", "Household member", "iphone-15", MOBILE, IPHONE,
+			now.minus(Duration.ofDays(3)), 8, false, "SYNCED");
 		seed("recipes", "Grandma's recipes to learn",
 			"Lemon rasam, ragi dosa batter, coconut burfi, and the quick mango pickle that keeps for one week.",
-			"Amma", "Meera", now.minus(Duration.ofDays(5)), 11, false, "SYNCED");
+			"Household member", "Household member", "pixel-9", MOBILE, ANDROID,
+			now.minus(Duration.ofDays(5)), 11, false, "SYNCED");
 		seed("errands", "Weekend errands",
 			"Pick up framed photo, renew library cards, service the blue bicycle, and visit the tailor after 4 pm.",
-			"Ravi", "Ravi", now.minus(Duration.ofDays(6)), 5, false, "SYNCED");
+			"Household owner", "Household owner", CURRENT_DEVICE, LAPTOP, WEB,
+			now.minus(Duration.ofDays(6)), 5, false, "SYNCED");
 	}
 
 	private void seed(
@@ -325,6 +371,9 @@ public class PrototypeNotebookService {
 			String body,
 			String createdBy,
 			String lastEditedBy,
+			String originDeviceName,
+			String originDeviceType,
+			String originDevicePlatform,
 			Instant modifiedAt,
 			int revisionNumber,
 			boolean conflict,
@@ -337,21 +386,37 @@ public class PrototypeNotebookService {
 			body,
 			createdBy,
 			lastEditedBy,
+			originDeviceName,
+			originDeviceType,
+			originDevicePlatform,
 			modifiedAt.minus(Duration.ofDays(Math.max(1, revisionNumber / 2))),
 			modifiedAt,
 			revisionId,
 			revisionNumber,
 			conflict,
 			propagationStatus);
-		note.revisions.add(new Revision(revisionId, revisionNumber, title, body, lastEditedBy, "Meera".equals(lastEditedBy) ? "Meera's Pixel" : "Ravi's Work Laptop", modifiedAt, conflict ? "Conflict candidate" : "Current"));
+		note.revisions.add(new Revision(
+			revisionId,
+			revisionNumber,
+			title,
+			body,
+			lastEditedBy,
+			originDeviceName,
+			originDeviceType,
+			originDevicePlatform,
+			modifiedAt,
+			conflict ? "Conflict candidate" : "Current"));
 		if (revisionNumber > 1) {
+			boolean currentRevisionFromLaptop = LAPTOP.equals(originDeviceType);
 			note.revisions.add(new Revision(
 				seedId("revision-" + key + "-" + (revisionNumber - 1)),
 				revisionNumber - 1,
 				title,
 				body + "\n",
 				createdBy,
-				"Android phone",
+				currentRevisionFromLaptop ? "pixel-9" : CURRENT_DEVICE,
+				currentRevisionFromLaptop ? MOBILE : LAPTOP,
+				currentRevisionFromLaptop ? ANDROID : WEB,
 				modifiedAt.minus(Duration.ofDays(1)),
 				"Retained"));
 		}
@@ -367,10 +432,13 @@ public class PrototypeNotebookService {
 			String body,
 			String author,
 			String origin,
+			String originDeviceType,
+			String originDevicePlatform,
 			Instant createdAt,
 			String label) {
 		Revision withLabel(String nextLabel) {
-			return new Revision(id, number, title, body, author, origin, createdAt, nextLabel);
+			return new Revision(
+				id, number, title, body, author, origin, originDeviceType, originDevicePlatform, createdAt, nextLabel);
 		}
 	}
 
@@ -380,6 +448,9 @@ public class PrototypeNotebookService {
 		private String body;
 		private final String createdBy;
 		private String lastEditedBy;
+		private String originDeviceName;
+		private String originDeviceType;
+		private String originDevicePlatform;
 		private final Instant createdAt;
 		private Instant modifiedAt;
 		private UUID revisionId;
@@ -394,6 +465,9 @@ public class PrototypeNotebookService {
 				String body,
 				String createdBy,
 				String lastEditedBy,
+				String originDeviceName,
+				String originDeviceType,
+				String originDevicePlatform,
 				Instant createdAt,
 				Instant modifiedAt,
 				UUID revisionId,
@@ -405,6 +479,9 @@ public class PrototypeNotebookService {
 			this.body = body;
 			this.createdBy = createdBy;
 			this.lastEditedBy = lastEditedBy;
+			this.originDeviceName = originDeviceName;
+			this.originDeviceType = originDeviceType;
+			this.originDevicePlatform = originDevicePlatform;
 			this.createdAt = createdAt;
 			this.modifiedAt = modifiedAt;
 			this.revisionId = revisionId;

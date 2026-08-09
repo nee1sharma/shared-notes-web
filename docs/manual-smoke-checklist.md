@@ -25,15 +25,15 @@ For frontend hot reload, start the Spring prototype as above, then run `pnpm dev
 - Search by title, creator, and last editor. Confirm changing a search field resets the result list.
 - Filter by conflict state and modified-date range, then clear the filters.
 - Change sort order between recently modified, recently created, and title.
-- Select a note and confirm its title, body, revision, editor, commit state, and Android propagation state appear.
+- Select a note and confirm its title, body, revision, origin device, commit state, and mobile propagation state appear.
 - Create a note, edit its title and body, and save it.
-- Confirm `Saved to laptop` appears only after the API responds and propagation remains a separate status.
+- Confirm `Saved to hitstudio` appears only after the API responds and mobile propagation remains a separate status.
 - Edit a saved note and try to leave or close the tab before saving; confirm the browser warns.
 - Confirm note text is not written to localStorage, sessionStorage, or IndexedDB.
 
 ## Connection and admin previews
 
-- Open Connection and confirm browser session, PostgreSQL commit, and Android propagation appear as three distinct layers.
+- Open Connection and confirm browser session, PostgreSQL commit, and mobile propagation appear as three distinct layers.
 - Use `Sync now`; confirm pending synthetic changes become synchronized with reachable peers.
 - Confirm the wording is `No pending changes known to the laptop`, not a claim that every offline device is current.
 - Open Admin and confirm Android devices and web sessions have separate counts.

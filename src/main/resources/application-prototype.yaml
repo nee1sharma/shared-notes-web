@@ -7,7 +7,10 @@ spring:
 shared-notebook:
   prototype-mode: true
   node:
-    id: prototype-admin-laptop
+    id: prototype-hitstudio
+    name: hitstudio
+    type: LAPTOP
+    platform: WEB
   security:
     master-key-ref: prototype-not-used
     signing-key-ref: prototype-not-used

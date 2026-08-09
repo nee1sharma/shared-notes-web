@@ -1686,7 +1686,7 @@ p {
   background: var(--forest-soft);
 }
 
-.device-icon.android { color: #5c6d86; background: #e9edf5; }
+.device-icon.mobile { color: #5c6d86; background: #e9edf5; }
 .device-icon.pending { color: #916b29; background: var(--gold-soft); }
 .device-row > div { min-width: 0; flex: 1; }
 .device-row strong,

@@ -15,11 +15,18 @@ public final class PrototypeModels {
 
 	public record MemberView(UUID id, String name, String role, String initials) {}
 
-	public record WebDeviceView(UUID id, String name, String shortId, String status) {}
+	public record DeviceView(
+			UUID id,
+			String name,
+			String shortId,
+			String type,
+			String platform,
+			String status,
+			String lastSeen) {}
 
 	public record SessionView(
 			MemberView member,
-			WebDeviceView webDevice,
+			DeviceView device,
 			String backendName,
 			String browserSession,
 			String databaseStatus,
@@ -37,6 +44,9 @@ public final class PrototypeModels {
 			String preview,
 			String createdBy,
 			String lastEditedBy,
+			String originDeviceName,
+			String originDeviceType,
+			String originDevicePlatform,
 			Instant modifiedAt,
 			String revision,
 			String saveStatus,
@@ -50,6 +60,8 @@ public final class PrototypeModels {
 			String body,
 			String author,
 			String origin,
+			String originDeviceType,
+			String originDevicePlatform,
 			Instant createdAt,
 			String label) {}
 
@@ -59,6 +71,9 @@ public final class PrototypeModels {
 			String body,
 			String createdBy,
 			String lastEditedBy,
+			String originDeviceName,
+			String originDeviceType,
+			String originDevicePlatform,
 			Instant modifiedAt,
 			UUID revisionId,
 			String revision,
@@ -90,14 +105,15 @@ public final class PrototypeModels {
 			String message) {}
 
 	public record AdminOverview(
-			int registeredAndroidDevices,
-			int acceptedWebDevices,
-			int connectedAndroidPeers,
-			int connectedWebSessions,
+			int registeredLaptopDevices,
+			int registeredMobileDevices,
+			int connectedLaptopDevices,
+			int connectedMobileDevices,
 			int pendingApprovals,
 			int blockedOrRevoked,
 			int unresolvedConflicts,
-			int recentSyncFailures) {}
+			int recentSyncFailures,
+			List<DeviceView> devices) {}
 
 	public record ApiError(String code, String message, Instant timestamp) {}
 }

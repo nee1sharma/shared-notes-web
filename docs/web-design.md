@@ -14,7 +14,7 @@ The experience must make four facts clear:
 
 - The browser is connected to the stateful backend on the designated admin laptop.
 - An accepted web device does not need repeated admin approval.
-- `Saved to laptop` and `Propagated to Android devices` are different states.
+- `Saved to <device name>` and mobile propagation are different states.
 - Web/admin access ends when the laptop backend or PostgreSQL stops, while Android note usage continues independently.
 
 The browser is a temporary interface with a remembered identity. It is not an installed application, a permanent peer, or a separate note repository.
@@ -99,8 +99,8 @@ Use single-page navigation with a top app bar. The note list, editor, revisions,
 
 While authenticated, the application shell shows a compact connection indicator:
 
-- `Connected to admin laptop`
-- `Saved to laptop · Android propagation pending`
+- `Connected to hitstudio`
+- `Saved to hitstudio · Mobile propagation pending`
 - `2 household peers reachable`
 - `Connection interrupted`
 
@@ -155,7 +155,7 @@ No approval prompt is shown. If policy requires member unlock, it happens after 
 2. The browser keeps the editable draft in page memory.
 3. Save sends the note ID, new content, idempotency key, and parent revision `R17`.
 4. The backend validates permissions and current revision state.
-5. PostgreSQL commits `R18` durably and the backend acknowledges `Saved to laptop`.
+5. PostgreSQL commits `R18` durably and the backend acknowledges `Saved to hitstudio`.
 6. The configured synchronization mode determines when the backend reconciles Android peers.
 7. The browser updates household sync status independently of the save acknowledgement.
 
@@ -194,7 +194,9 @@ No household name, member data, or note preview is disclosed before the backend 
 **Content:**
 
 - Member-association action.
-- Editable device name, such as `Ravi's Work Laptop`.
+- Editable device name, such as `hitstudio`.
+- Device type: `LAPTOP` or `MOBILE`.
+- Device platform: `WEB`, `ANDROID`, or `IPHONE`.
 - Explanation: `This browser will be remembered on this profile. You will not need approval each time.`
 - Privacy warning for shared or public computer profiles.
 - Continue and cancel actions.
@@ -265,8 +267,8 @@ Search applies to all authorized current shared notes, not merely the rows alrea
 **Save states:**
 
 - `Editing`
-- `Saving to laptop`
-- `Saved to laptop`
+- `Saving to hitstudio`
+- `Saved to hitstudio`
 - `Sync pending`
 - `Synchronized with reachable peers`
 - `Connection interrupted — draft kept in this tab`
@@ -306,9 +308,9 @@ Saving the resolution produces one new revision naming all conflict parents.
 
 | Layer | Example status |
 |---|---|
-| Browser session | `Connected to admin laptop` |
-| PostgreSQL commit | `All edits saved to laptop` |
-| Android propagation | `1 change waiting; 2 devices globally connected` |
+| Browser session | `Connected to hitstudio` |
+| PostgreSQL commit | `All edits saved to hitstudio` |
+| Mobile propagation | `1 change waiting; 2 devices globally connected` |
 
 **Content:**
 
@@ -416,9 +418,9 @@ Extend filters with:
 
 Example rows:
 
-- `Ravi's Work Laptop was accepted automatically on the home LAN.`
-- `Ravi opened Shopping List from Work Laptop.`
-- `Work Laptop disconnected after 20 minutes of inactivity.`
+- `hitstudio was accepted automatically on the home LAN.`
+- `hitstudio opened Shopping List.`
+- `hitstudio disconnected after 20 minutes of inactivity.`
 - `Admin revoked Guest Browser.`
 
 ### 6.13 Admin shared-note trash and private delivery
@@ -474,7 +476,7 @@ stateDiagram-v2
     Conflict --> LaptopSaved: Resolution committed
 ```
 
-The browser may display multiple compatible states, such as `Saved to laptop · Android propagation failed`.
+The browser may display multiple compatible states, such as `Saved to hitstudio · Mobile propagation failed`.
 
 ## 8. Laptop full-stack technical design
 
@@ -867,7 +869,7 @@ Spring Boot can terminate HTTPS, but certificate trust for a LAN-only hostname r
 | Passkey assertion cancelled or rejected | Preserve the non-admin session, deny the privileged action, and allow an explicit retry. |
 | Every root-admin passkey is unavailable | Administration remains locked; version 1 has no automated recovery path. |
 | Admin disables new enrollment | Accepted devices may reconnect; new devices receive a clear policy message. |
-| PostgreSQL save succeeds but Android propagation fails | Show `Saved to laptop · Android propagation failed` with retry. |
+| PostgreSQL save succeeds but mobile propagation fails | Show `Saved to hitstudio · Mobile propagation failed` with retry. |
 | Parent revision is outdated | Preserve draft and open conflict resolution. |
 | `Show more` request fails | Keep already loaded rows, retain the cursor, and show a retry action without duplicating notes. |
 | Search filters change during a request | Cancel or ignore the stale response and load a fresh first page of 20. |

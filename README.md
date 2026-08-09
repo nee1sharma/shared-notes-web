@@ -1,6 +1,6 @@
 # SharedNoteBook Web Companion
 
-SharedNoteBook is a local-first household notebook that runs on the designated admin laptop. The web companion lets household members work with shared notes in a browser while Spring Boot owns authentication, administration, durable PostgreSQL commits, and synchronization with registered Android devices.
+SharedNoteBook is a local-first household notebook that runs on a designated host device. The current prototype host is the `hitstudio` laptop. The web companion lets household members work with shared notes in a browser while Spring Boot owns authentication, administration, durable PostgreSQL commits, and synchronization with registered mobile devices, including Android phones and iPhones.
 
 The browser is a temporary interface, not an independent notebook peer. Private Android notes are never exposed on the web.
 
@@ -110,7 +110,10 @@ The default profile binds the web application to `127.0.0.1:8080`, enables Postg
 export SNB_DB_URL='jdbc:postgresql://localhost:5432/shared_notebook'
 export SNB_DB_USER='shared_notebook'
 export SNB_DB_PASSWORD='replace-with-an-external-secret'
-export SNB_NODE_ID='replace-with-the-admin-laptop-node-id'
+export SNB_NODE_ID='replace-with-the-host-device-node-id'
+export SNB_DEVICE_NAME='hitstudio'
+export SNB_DEVICE_TYPE='LAPTOP'
+export SNB_DEVICE_PLATFORM='WEB'
 export SNB_MASTER_KEY_REF='replace-with-an-os-keystore-reference'
 export SNB_SIGNING_KEY_REF='replace-with-an-os-keystore-reference'
 export SNB_HOME_LAN_PROFILE_REF='replace-with-the-trusted-network-profile-reference'
@@ -122,7 +125,7 @@ Do not commit real secret values or key material. The default profile currently 
 
 | Method | Endpoint | Purpose |
 |---|---|---|
-| `GET` | `/api/v1/session` | Current synthetic member, web device, CSRF token, and connection state |
+| `GET` | `/api/v1/session` | Current synthetic member, typed device, CSRF token, and connection state |
 | `GET` | `/api/v1/shared-notes` | Searchable shared-note summaries with opaque cursor support |
 | `GET` | `/api/v1/shared-notes/{noteId}` | Note content and retained revisions |
 | `POST` | `/api/v1/shared-notes` | Create a synthetic shared note |
@@ -199,9 +202,9 @@ The planned slices are defined in detail in the product design:
 1. Full-stack foundation with synthetic notes — current slice.
 2. Root-admin passkey bootstrap and secure-origin verification.
 3. Authenticated Android discovery and reconciliation.
-4. Web-device identity, remembered acceptance, and global device management.
+4. Device identity, typed platforms, remembered acceptance, and global device management.
 5. PostgreSQL-backed note listing, filtering, editing, and immutable revision saves.
-6. Android propagation, outage recovery, and conflict resolution.
+6. Mobile propagation, outage recovery, and conflict resolution.
 7. Revision/activity history, trash, purge, and private delivery.
 8. Policy controls, delegated admins, device revocation, accessibility, and browser-matrix verification.
 

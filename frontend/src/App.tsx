@@ -61,7 +61,7 @@ import {
   synchronize,
   type NoteQuery,
 } from './api'
-import type { AdminOverview, NoteDetail, NoteSummary, Session } from './types'
+import type { AdminOverview, Device, NoteDetail, NoteSummary, Session } from './types'
 
 type SessionContextValue = {
   session: Session
@@ -147,16 +147,16 @@ function BackendUnavailable({ onRetry }: { onRetry: () => Promise<void> }) {
     <main className="unavailable-page">
       <section className="unavailable-card">
         <BrandMark large />
-        <p className="eyebrow">Admin laptop not ready</p>
-        <h1>Start SharedNoteBook on this laptop</h1>
+        <p className="eyebrow">Host device not ready</p>
+        <h1>Start SharedNoteBook on hitstudio</h1>
         <p className="unavailable-lede">
-          The notebook opens here only while the local Spring Boot service and PostgreSQL are running.
-          Android notes continue to work independently.
+          The notebook opens here only while the local Spring Boot service on hitstudio and PostgreSQL are running.
+          Mobile notes continue to work independently.
         </p>
         <ol className="startup-steps">
           <li><span>1</span><div><strong>Start PostgreSQL</strong><p>Confirm the shared_notebook database is available.</p></div></li>
-          <li><span>2</span><div><strong>Start the laptop backend</strong><p>Use the prototype profile for this first implementation slice.</p></div></li>
-          <li><span>3</span><div><strong>Keep this address local</strong><p>Version 1 web access is limited to localhost on the admin laptop.</p></div></li>
+          <li><span>2</span><div><strong>Start the hitstudio backend</strong><p>Use the prototype profile for this first implementation slice.</p></div></li>
+          <li><span>3</span><div><strong>Keep this address local</strong><p>Version 1 web access is limited to localhost on hitstudio.</p></div></li>
         </ol>
         <button className="primary-button large" onClick={() => void retry()} disabled={retrying}>
           <RefreshCw size={18} className={retrying ? 'spin' : ''} />
@@ -209,8 +209,8 @@ function ApplicationShell() {
           <ChevronRight size={16} />
         </div>
         <button className="member-card" type="button">
-          <span className="avatar">{session.member.initials}</span>
-          <span className="member-copy"><strong>{session.member.name}</strong><span>Root admin</span></span>
+          <span className="avatar"><Laptop size={17} /></span>
+          <span className="member-copy"><strong>{session.device.name}</strong><span>{deviceKind(session.device)} · Root admin</span></span>
           <MoreHorizontal size={18} />
         </button>
       </aside>
@@ -218,7 +218,7 @@ function ApplicationShell() {
       <header className="mobile-app-bar">
         <button className="icon-button" onClick={() => setMobileMenu(true)} aria-label="Open navigation"><Menu size={22} /></button>
         <div className="mobile-brand"><BrandMark /><strong>SharedNoteBook</strong></div>
-        <span className="avatar small">{session.member.initials}</span>
+        <span className="avatar small"><Laptop size={15} /></span>
       </header>
 
       {mobileMenu && <button className="menu-scrim" onClick={() => setMobileMenu(false)} aria-label="Close navigation overlay" />}
@@ -252,11 +252,11 @@ function ConnectionStrip() {
   const pending = session.pendingChanges > 0
   return (
     <div className="connection-strip" role="status" aria-live="polite">
-      <span className="connection-strip-item"><CheckCircle2 size={15} /> Connected to admin laptop</span>
+      <span className="connection-strip-item"><CheckCircle2 size={15} /> Connected to {session.device.name}</span>
       <span className="status-divider" />
       <span className={`connection-strip-item${pending ? ' pending' : ''}`}>
         {pending ? <Clock3 size={15} /> : <Check size={15} />}
-        {pending ? `Saved to laptop · ${session.pendingChanges} Android ${session.pendingChanges === 1 ? 'change' : 'changes'} pending` : 'All edits saved to laptop'}
+        {pending ? `Saved to ${session.device.name} · ${session.pendingChanges} mobile ${session.pendingChanges === 1 ? 'change' : 'changes'} pending` : `All edits saved to ${session.device.name}`}
       </span>
       <span className="connection-strip-peers"><Smartphone size={14} /> {session.reachablePeers} household peers reachable</span>
       {session.prototype && <span className="prototype-badge">Prototype data</span>}
@@ -403,7 +403,7 @@ function NotesWorkspace() {
               <span className="note-row-top"><strong>{note.title}</strong><time>{relativeTime(note.modifiedAt)}</time></span>
               <span className="note-preview">{note.preview || 'Empty note'}</span>
               <span className="note-row-bottom">
-                <span>Edited by {note.lastEditedBy}</span>
+                <span>Edited from {note.originDeviceName} · {deviceKind(note)}</span>
                 {note.conflict ? <em className="conflict-label"><CircleAlert size={13} /> Conflict</em> : note.propagationStatus === 'PENDING' ? <em className="pending-label"><Clock3 size={13} /> Sync pending</em> : <em className="saved-label"><Check size={13} /> Saved</em>}
               </span>
             </button>
@@ -540,7 +540,7 @@ function NoteEditor({ noteId, onChanged }: { noteId: string; onChanged: () => vo
           <input className="title-input" aria-label="Note title" value={title} onChange={event => setTitle(event.target.value)} maxLength={180} />
           <div className="editor-meta">
             <span>{note.revision}</span><i />
-            <span>Edited by {note.lastEditedBy}</span><i />
+            <span>Edited from {note.originDeviceName} · {deviceKind(note)}</span><i />
             <span>{fullDate(note.modifiedAt)}</span>
           </div>
           <textarea className="body-input" aria-label="Note body" value={body} onChange={event => setBody(event.target.value)} placeholder="Write something for the household…" spellCheck />
@@ -548,13 +548,13 @@ function NoteEditor({ noteId, onChanged }: { noteId: string; onChanged: () => vo
 
         {historyOpen && (
           <aside className="history-panel" aria-label="Revision history">
-            <div className="history-heading"><div><p className="eyebrow">Retained on laptop</p><h2>Revision history</h2></div><button type="button" className="icon-button" onClick={() => setHistoryOpen(false)} aria-label="Close revision history"><X size={19} /></button></div>
+            <div className="history-heading"><div><p className="eyebrow">Retained on {note.originDeviceName}</p><h2>Revision history</h2></div><button type="button" className="icon-button" onClick={() => setHistoryOpen(false)} aria-label="Close revision history"><X size={19} /></button></div>
             <p className="history-note">History is limited by household retention and what has reconciled to PostgreSQL.</p>
             <ol className="revision-list">
               {note.revisions.map((revision, index) => (
                 <li key={revision.id}>
                   <span className="revision-marker">{index === 0 ? <Check size={14} /> : null}</span>
-                  <div><div className="revision-title"><strong>{revision.revision}</strong><em>{revision.label}</em></div><p>{revision.author} · {revision.origin}</p><time>{fullDate(revision.createdAt)}</time><button type="button">Preview revision</button></div>
+                  <div><div className="revision-title"><strong>{revision.revision}</strong><em>{revision.label}</em></div><p>{revision.origin} · {deviceKind({ type: revision.originDeviceType, platform: revision.originDevicePlatform })}</p><time>{fullDate(revision.createdAt)}</time><button type="button">Preview revision</button></div>
                 </li>
               ))}
             </ol>
@@ -565,29 +565,29 @@ function NoteEditor({ noteId, onChanged }: { noteId: string; onChanged: () => vo
       <div className={`editor-status ${state}`} role="status" aria-live="polite">
         <div className="status-primary">
           {state === 'saving' ? <LoaderCircle size={17} className="spin" /> : state === 'error' || state === 'conflict' ? <CircleAlert size={17} /> : dirty ? <Clock3 size={17} /> : <CheckCircle2 size={17} />}
-          <span><strong>{statusTitle(state, dirty)}</strong><small>{message || statusMessage(state, note)}</small></span>
+          <span><strong>{statusTitle(state, dirty, note.originDeviceName)}</strong><small>{message || statusMessage(state, note)}</small></span>
         </div>
         <div className="propagation-state">
           {note.propagationStatus === 'PENDING' ? <Clock3 size={16} /> : <Smartphone size={16} />}
-          <span><strong>{note.propagationStatus === 'PENDING' ? 'Android propagation pending' : 'Synchronized with reachable peers'}</strong><small>Offline devices may still have undiscovered work.</small></span>
+          <span><strong>{note.propagationStatus === 'PENDING' ? 'Mobile propagation pending' : 'Synchronized with reachable peers'}</strong><small>Offline devices may still have undiscovered work.</small></span>
         </div>
       </div>
     </form>
   )
 }
 
-function statusTitle(state: EditorState, dirty: boolean) {
-  if (state === 'saving') return 'Saving to laptop'
+function statusTitle(state: EditorState, dirty: boolean, deviceName: string) {
+  if (state === 'saving') return `Saving to ${deviceName}`
   if (state === 'conflict') return 'Conflict'
   if (state === 'error') return 'Save failed'
   if (dirty || state === 'editing') return 'Editing · not saved yet'
-  return 'Saved to laptop'
+  return `Saved to ${deviceName}`
 }
 
 function statusMessage(state: EditorState, note: NoteDetail) {
   if (state === 'saving') return 'Waiting for PostgreSQL acknowledgement…'
   if (state === 'editing') return 'Draft kept in this tab until you save.'
-  return `${note.revision} committed durably on the admin laptop.`
+  return `${note.revision} committed durably on ${note.originDeviceName}.`
 }
 
 function EditorSkeleton() {
@@ -615,25 +615,25 @@ function ConnectionPage() {
 
   return (
     <main className="page-shell connection-page">
-      <PageHeading eyebrow="This browser" title="Connection & synchronization" description="The laptop save and Android propagation are tracked separately, so you always know where a change reached." action={<button className="primary-button" onClick={() => void syncNow()} disabled={syncing}>{syncing ? <LoaderCircle className="spin" size={17} /> : <RefreshCw size={17} />}{syncing ? 'Synchronizing…' : 'Sync now'}</button>} />
+      <PageHeading eyebrow="This browser" title="Connection & synchronization" description={`Saves to ${session.device.name} and mobile propagation are tracked separately, so you always know where a change reached.`} action={<button className="primary-button" onClick={() => void syncNow()} disabled={syncing}>{syncing ? <LoaderCircle className="spin" size={17} /> : <RefreshCw size={17} />}{syncing ? 'Synchronizing…' : 'Sync now'}</button>} />
       {message && <div className="success-banner" role="status"><CheckCircle2 size={18} />{message}</div>}
       <section className="status-layers" aria-label="Connection layers">
-        <StatusLayer icon={Laptop} tone="good" eyebrow="Browser session" title="Connected to admin laptop" detail={`${session.webDevice.name} · ${session.webDevice.shortId}`} />
-        <StatusLayer icon={Database} tone="good" eyebrow="PostgreSQL commit" title="All acknowledged edits saved" detail="The laptop database is ready for durable commits." />
-        <StatusLayer icon={Smartphone} tone={session.pendingChanges ? 'pending' : 'good'} eyebrow="Android propagation" title={session.pendingChanges ? `${session.pendingChanges} ${session.pendingChanges === 1 ? 'change' : 'changes'} waiting` : 'No pending changes known'} detail={`${session.reachablePeers} household peers globally connected`} />
+        <StatusLayer icon={Laptop} tone="good" eyebrow="Browser session" title={`Connected to ${session.device.name}`} detail={`${deviceKind(session.device)} · ${session.device.shortId}`} />
+        <StatusLayer icon={Database} tone="good" eyebrow="PostgreSQL commit" title="All acknowledged edits saved" detail={`${session.device.name} is ready for durable commits.`} />
+        <StatusLayer icon={Smartphone} tone={session.pendingChanges ? 'pending' : 'good'} eyebrow="Mobile propagation" title={session.pendingChanges ? `${session.pendingChanges} ${session.pendingChanges === 1 ? 'change' : 'changes'} waiting` : 'No pending changes known'} detail={`${session.reachablePeers} household peers globally connected`} />
       </section>
 
       <section className="connection-grid">
         <div className="surface-card connection-detail-card">
-          <div className="card-heading"><div><p className="eyebrow">Current session</p><h2>{session.webDevice.name}</h2></div><span className="online-chip"><Wifi size={14} /> Connected</span></div>
-          <dl className="detail-list"><div><dt>Web device</dt><dd>{session.webDevice.shortId}</dd></div><div><dt>Backend</dt><dd>{session.backendName}</dd></div><div><dt>Idle timeout</dt><dd>30 minutes</dd></div><div><dt>Network scope</dt><dd>Loopback only</dd></div></dl>
+          <div className="card-heading"><div><p className="eyebrow">Current session</p><h2>{session.device.name}</h2></div><span className="online-chip"><Wifi size={14} /> Connected</span></div>
+          <dl className="detail-list"><div><dt>Device</dt><dd>{session.device.shortId}</dd></div><div><dt>Type</dt><dd>{deviceKind(session.device)}</dd></div><div><dt>Backend</dt><dd>{session.backendName}</dd></div><div><dt>Idle timeout</dt><dd>30 minutes</dd></div><div><dt>Network scope</dt><dd>Loopback only</dd></div></dl>
           <button className="secondary-button danger-soft"><LogOut size={16} /> Disconnect this session</button>
         </div>
         <div className="surface-card sync-detail-card">
           <div className="card-heading"><div><p className="eyebrow">Household sync</p><h2>After each save</h2></div><span className="subtle-chip">Default</span></div>
           <div className="sync-stat"><span className="sync-stat-icon"><RefreshCw size={20} /></span><div><strong>{relativeTime(session.lastSynchronizedAt)}</strong><span>Last successful reconciliation</span></div></div>
           <div className="sync-stat"><span className="sync-stat-icon"><Smartphone size={20} /></span><div><strong>{session.reachablePeers} reachable peers</strong><span>Latest-known global presence</span></div></div>
-          <p className="caution-copy"><CircleAlert size={16} /> Offline devices may hold work the laptop has not discovered yet.</p>
+          <p className="caution-copy"><CircleAlert size={16} /> Offline devices may hold work {session.device.name} has not discovered yet.</p>
         </div>
       </section>
     </main>
@@ -654,12 +654,12 @@ function AdminPage() {
 
   return (
     <main className="page-shell admin-page">
-      <PageHeading eyebrow="Household administration" title="Admin overview" description="Manage access, devices, shared-note health, and household policy from the designated laptop." action={<button className="secondary-button"><Settings2 size={17} /> Household settings</button>} />
-      <div className="eventual-banner"><Activity size={17} /><span><strong>Latest-known household state</strong> Device presence updates while the laptop backend receives authenticated heartbeats.</span></div>
+      <PageHeading eyebrow="Household administration" title="Admin overview" description="Manage access, devices, shared-note health, and household policy from the designated host device." action={<button className="secondary-button"><Settings2 size={17} /> Household settings</button>} />
+      <div className="eventual-banner"><Activity size={17} /><span><strong>Latest-known household state</strong> Device presence updates while the hitstudio backend receives authenticated heartbeats.</span></div>
       {error && <div className="inline-error"><CircleAlert size={16} />{error}</div>}
       <section className="metric-grid">
-        <MetricCard label="Android devices" value={overview?.registeredAndroidDevices} helper={`${overview?.connectedAndroidPeers ?? '—'} connected now`} icon={Smartphone} />
-        <MetricCard label="Web devices" value={overview?.acceptedWebDevices} helper={`${overview?.connectedWebSessions ?? '—'} session connected`} icon={Laptop} />
+        <MetricCard label="Laptop devices" value={overview?.registeredLaptopDevices} helper={`${overview?.connectedLaptopDevices ?? '—'} connected now`} icon={Laptop} />
+        <MetricCard label="Mobile devices" value={overview?.registeredMobileDevices} helper={`${overview?.connectedMobileDevices ?? '—'} connected now`} icon={Smartphone} />
         <MetricCard label="Pending approvals" value={overview?.pendingApprovals} helper="Needs an admin decision" icon={Clock3} tone="attention" />
         <MetricCard label="Unresolved conflicts" value={overview?.unresolvedConflicts} helper="Both versions preserved" icon={CircleAlert} tone="attention" />
       </section>
@@ -667,18 +667,15 @@ function AdminPage() {
       <section className="admin-grid">
         <div className="surface-card devices-card">
           <div className="card-heading"><div><p className="eyebrow">Connected now</p><h2>Household devices</h2></div><button className="text-button">View all <ChevronRight size={15} /></button></div>
-          <div className="device-row"><span className="device-icon"><Laptop size={19} /></span><div><strong>Ravi's Work Laptop</strong><span>Ravi · Web · WEB-7A2F</span></div><em className="online-chip"><Wifi size={13} /> Connected</em></div>
-          <div className="device-row"><span className="device-icon android"><Smartphone size={19} /></span><div><strong>Meera's Pixel</strong><span>Meera · Android · last heartbeat now</span></div><em className="online-chip"><Wifi size={13} /> Connected</em></div>
-          <div className="device-row"><span className="device-icon android"><Smartphone size={19} /></span><div><strong>Amma's phone</strong><span>Amma · Android · last heartbeat 2m ago</span></div><em className="online-chip"><Wifi size={13} /> Connected</em></div>
-          <div className="device-row pending-device"><span className="device-icon pending"><Clock3 size={19} /></span><div><strong>Guest browser</strong><span>Arun · Web · requested 12m ago</span></div><button className="secondary-button compact">Review</button></div>
+          {overview?.devices.map(device => <DeviceRow key={device.id} device={device} />)}
         </div>
 
         <div className="surface-card activity-card">
           <div className="card-heading"><div><p className="eyebrow">Recent household events</p><h2>Activity</h2></div><button className="text-button">View history <ChevronRight size={15} /></button></div>
           <ul className="activity-list">
-            <ActivityItem icon={BookOpen} title="Ravi updated Sunday market list" detail="Work Laptop · just now" />
-            <ActivityItem icon={Wifi} title="Meera's Pixel connected" detail="Authenticated heartbeat · 4m ago" />
-            <ActivityItem icon={KeyRound} title="Admin session reauthenticated" detail="Ravi · Work Laptop · 18m ago" />
+            <ActivityItem icon={BookOpen} title="hitstudio updated Sunday market list" detail="Laptop · Web · just now" />
+            <ActivityItem icon={Wifi} title="pixel-9 connected" detail="Mobile · Android · 4m ago" />
+            <ActivityItem icon={KeyRound} title="Admin session reauthenticated" detail="hitstudio · Laptop · 18m ago" />
             <ActivityItem icon={Archive} title="Old travel list moved to trash" detail="Retained for 30 days · yesterday" />
           </ul>
         </div>
@@ -694,6 +691,20 @@ function AdminPage() {
 
 function MetricCard({ label, value, helper, icon: Icon, tone }: { label: string; value?: number; helper: string; icon: LucideIcon; tone?: 'attention' }) {
   return <article className={`metric-card${tone ? ` ${tone}` : ''}`}><span><Icon size={19} /></span><div><p>{label}</p><strong>{value ?? '—'}</strong><small>{helper}</small></div></article>
+}
+
+function DeviceRow({ device }: { device: Device }) {
+  const pending = device.status === 'PENDING'
+  const Icon = device.type === 'MOBILE' ? Smartphone : Laptop
+  return (
+    <div className={`device-row${pending ? ' pending-device' : ''}`}>
+      <span className={`device-icon${pending ? ' pending' : device.type === 'MOBILE' ? ' mobile' : ''}`}><Icon size={19} /></span>
+      <div><strong>{device.name}</strong><span>{deviceKind(device)} · {device.shortId} · {device.lastSeen}</span></div>
+      {pending
+        ? <button className="secondary-button compact">Review</button>
+        : <em className="online-chip"><Wifi size={13} /> Connected</em>}
+    </div>
+  )
 }
 
 function ActivityItem({ icon: Icon, title, detail }: { icon: LucideIcon; title: string; detail: string }) {
@@ -718,4 +729,11 @@ function relativeTime(value: string) {
 
 function fullDate(value: string) {
   return new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value))
+}
+
+function deviceKind(device: Pick<Device, 'type' | 'platform'> | Pick<NoteSummary, 'originDeviceType' | 'originDevicePlatform'>) {
+  const type = 'type' in device ? device.type : device.originDeviceType
+  const platform = 'platform' in device ? device.platform : device.originDevicePlatform
+  if (type === 'MOBILE') return platform === 'IPHONE' ? 'Mobile · iPhone' : 'Mobile · Android'
+  return platform === 'WEB' ? 'Laptop · Web' : 'Laptop'
 }

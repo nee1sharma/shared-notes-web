@@ -29,8 +29,11 @@ server:
 shared-notebook:
   prototype-mode: false
   node:
-    role: ROOT_ADMIN_LAPTOP
+    role: ROOT_ADMIN_HOST
     id: ${SNB_NODE_ID}
+    name: ${SNB_DEVICE_NAME:hitstudio}
+    type: ${SNB_DEVICE_TYPE:LAPTOP}
+    platform: ${SNB_DEVICE_PLATFORM:WEB}
     auto-start-discovery: true
   web:
     enabled: true

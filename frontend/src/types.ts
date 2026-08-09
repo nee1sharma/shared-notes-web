@@ -5,16 +5,23 @@ export type Member = {
   initials: string
 }
 
-export type WebDevice = {
+export type DeviceType = 'LAPTOP' | 'MOBILE'
+
+export type DevicePlatform = 'WEB' | 'ANDROID' | 'IPHONE'
+
+export type Device = {
   id: string
   name: string
   shortId: string
+  type: DeviceType
+  platform: DevicePlatform
   status: string
+  lastSeen: string
 }
 
 export type Session = {
   member: Member
-  webDevice: WebDevice
+  device: Device
   backendName: string
   browserSession: string
   databaseStatus: string
@@ -33,6 +40,9 @@ export type NoteSummary = {
   preview: string
   createdBy: string
   lastEditedBy: string
+  originDeviceName: string
+  originDeviceType: DeviceType
+  originDevicePlatform: DevicePlatform
   modifiedAt: string
   revision: string
   saveStatus: 'SAVED'
@@ -47,11 +57,13 @@ export type Revision = {
   body: string
   author: string
   origin: string
+  originDeviceType: DeviceType
+  originDevicePlatform: DevicePlatform
   createdAt: string
   label: string
 }
 
-export type NoteDetail = NoteSummary & {
+export type NoteDetail = Omit<NoteSummary, 'preview'> & {
   body: string
   revisionId: string
   revisions: Revision[]
@@ -78,14 +90,15 @@ export type SyncResult = {
 }
 
 export type AdminOverview = {
-  registeredAndroidDevices: number
-  acceptedWebDevices: number
-  connectedAndroidPeers: number
-  connectedWebSessions: number
+  registeredLaptopDevices: number
+  registeredMobileDevices: number
+  connectedLaptopDevices: number
+  connectedMobileDevices: number
   pendingApprovals: number
   blockedOrRevoked: number
   unresolvedConflicts: number
   recentSyncFailures: number
+  devices: Device[]
 }
 
 export type ApiFailureBody = {

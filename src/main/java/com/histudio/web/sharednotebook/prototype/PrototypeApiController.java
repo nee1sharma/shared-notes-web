@@ -3,6 +3,7 @@ package com.histudio.web.sharednotebook.prototype;
 import static com.histudio.web.sharednotebook.prototype.PrototypeModels.AdminOverview;
 import static com.histudio.web.sharednotebook.prototype.PrototypeModels.ApiError;
 import static com.histudio.web.sharednotebook.prototype.PrototypeModels.CreateNoteRequest;
+import static com.histudio.web.sharednotebook.prototype.PrototypeModels.DeviceView;
 import static com.histudio.web.sharednotebook.prototype.PrototypeModels.MemberView;
 import static com.histudio.web.sharednotebook.prototype.PrototypeModels.NoteDetail;
 import static com.histudio.web.sharednotebook.prototype.PrototypeModels.NotePage;
@@ -10,7 +11,6 @@ import static com.histudio.web.sharednotebook.prototype.PrototypeModels.SaveNote
 import static com.histudio.web.sharednotebook.prototype.PrototypeModels.SaveResult;
 import static com.histudio.web.sharednotebook.prototype.PrototypeModels.SessionView;
 import static com.histudio.web.sharednotebook.prototype.PrototypeModels.SyncResult;
-import static com.histudio.web.sharednotebook.prototype.PrototypeModels.WebDeviceView;
 
 import java.time.Instant;
 import java.util.LinkedHashMap;
@@ -40,8 +40,8 @@ import org.springframework.web.bind.annotation.RestController;
 @ConditionalOnProperty(name = "shared-notebook.prototype-mode", havingValue = "true")
 public class PrototypeApiController {
 
-	private static final UUID MEMBER_ID = UUID.nameUUIDFromBytes("prototype-ravi".getBytes());
-	private static final UUID DEVICE_ID = UUID.nameUUIDFromBytes("prototype-work-laptop".getBytes());
+	private static final UUID MEMBER_ID = UUID.nameUUIDFromBytes("prototype-household-owner".getBytes());
+	private static final UUID DEVICE_ID = UUID.nameUUIDFromBytes("prototype-hitstudio".getBytes());
 
 	private final PrototypeNotebookService notebook;
 
@@ -53,9 +53,9 @@ public class PrototypeApiController {
 	SessionView session(CsrfToken csrfToken) {
 		int pending = notebook.pendingChanges();
 		return new SessionView(
-			new MemberView(MEMBER_ID, "Ravi", "ROOT_ADMIN", "RK"),
-			new WebDeviceView(DEVICE_ID, "Ravi's Work Laptop", "WEB-7A2F", "CONNECTED"),
-			"Admin laptop",
+			new MemberView(MEMBER_ID, "Household owner", "ROOT_ADMIN", "HO"),
+			new DeviceView(DEVICE_ID, "hitstudio", "LAP-7A2F", "LAPTOP", "WEB", "CONNECTED", "Now"),
+			"hitstudio",
 			"CONNECTED",
 			"READY",
 			pending == 0 ? "SYNCED" : "PENDING",
